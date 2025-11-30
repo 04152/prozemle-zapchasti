@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>Подбор каталога запчастей</h1>
+<p class="page-subtitle">
+    Внутренний сервис ОАО «Проземле-Агро» для быстрого поиска каталогов по технике.
+</p>
+
+<section class="card card--accent">
+    <form method="get" class="filter-form">
+        <div class="filter-grid">
+            <div class="field">
+                <label for="group">Группа техники</label>
+                <select id="group" name="group">
+                    <option value="">Любая</option>
+                    {% for g in groups %}
+                        <option value="{{ g }}" {% if selected.group == g %}selected{% endif %}>
+                            {{ g }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="field">
+                <label for="model">Модель (поиск по подстроке)</label>
+                <input id="model" type="text" name="model" placeholder="например, 82.1"
+                       value="{{ selected.model }}">
+            </div>
+
+            <div class="field">
+                <label for="catalog_type">Тип каталога</label>
+                <select id="catalog_type" name="catalog_type">
+                    <option value="">Любой</option>
+                    {% for t in catalog_types %}
+                        <option value="{{ t }}" {% if selected.catalog_type == t %}selected{% endif %}>
+                            {{ t }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="field">
+                <label for="text">Поиск в описании</label>
+                <input id="text" type="text" name="text" placeholder="ключевое слово"
+                       value="{{ selected.text }}">
+            </div>
+        </div>
+
+        <div class="actions">
+            <button type="submit" class="btn btn-primary">Найти</button>
+            <a href="{{ url_for('index') }}" class="btn btn-secondary">Сбросить фильтры</a>
+        </div>
+    </form>
+</section>
+
+<section class="card">
+    <div class="results-header">
+        <div>
+            Найдено записей: <strong>{{ results|length }}</strong>
+        </div>
+    </div>
+
+    {% if results %}
+        <div class="table-wrapper">
+            <table class="results-table">
+                <thead>
+                <tr>
+                    <th>Группа техники</th>
+                    <th>Модели</th>
+                    <th>Тип каталога</th>
+                    <th>Описание</th>
+                    <th>Ссылка</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for row in results %}
+                    <tr>
+                        <td>{{ row["Группа техники"] }}</td>
+                        <td>{{ row["Модели"] }}</td>
+                        <td>
+                            {% set t = row["Тип каталога"] %}
+                            {% set t_lower = t|lower %}
+                            {% if "онлайн" in t_lower %}
+                                <span class="badge-type badge-type--online">{{ t }}</span>
+                            {% elif "pdf" in t_lower %}
+                                <span class="badge-type badge-type--pdf">{{ t }}</span>
+                            {% elif "архив" in t_lower %}
+                                <span class="badge-type badge-type--archive">{{ t }}</span>
+                            {% else %}
+                                <span class="badge-type">{{ t }}</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ row["Описание"] }}</td>
+                        <td class="actions-cell">
+                            <a href="{{ row['Ссылка'] }}"
+                               class="btn btn-link"
+                               target="_blank"
+                               rel="noopener noreferrer">
+                                Открыть
+                            </a>
+                            <button type="button"
+                                    class="btn btn-ghost copy-btn"
+                                    data-link="{{ row['Ссылка'] }}">
+                                Копировать
+                            </button>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <p>По заданным фильтрам ничего не найдено. Попробуй ослабить критерии поиска.</p>
+    {% endif %}
+</section>
+{% endblock %}
