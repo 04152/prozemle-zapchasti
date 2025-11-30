@@ -1,333 +1,247 @@
-*,
-*::before,
-*::after {
+/* Базовые стили */
+
+* {
     box-sizing: border-box;
 }
 
 body {
     margin: 0;
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    background-color: #f5f5f7;
-    color: #1f2933;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Noto Sans", sans-serif;
+    background: #f4f5f9;
+    color: #222;
 }
 
-.container {
-    max-width: 1120px;
-    margin: 0 auto;
-    padding: 0 16px;
-}
+/* Шапка */
 
-/* ШАПКА / БРЕНДИНГ */
-
-.header {
-    background: linear-gradient(90deg, #0f766e, #0d9488);
+.pa-header {
+    display: flex;
+    align-items: center;
+    padding: 12px 20px;
+    background: linear-gradient(120deg, #1b5e20, #4caf50);
     color: #fff;
-    padding: 10px 0;
-    box-shadow: 0 2px 4px rgba(15, 118, 110, 0.3);
 }
 
-.header-inner {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
+.pa-header-logo {
+    margin-right: 16px;
+    flex-shrink: 0;
 }
 
-.brand {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.brand-logo {
-    width: 44px;
-    height: 44px;
-    border-radius: 10px;
-    object-fit: contain;
-    background: rgba(255, 255, 255, 0.12);
+.pa-logo {
+    max-height: 72px;
+    width: auto;
+    border-radius: 6px;
+    background: #fff;
     padding: 4px;
 }
 
-.brand-text {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-}
-
-.brand-name {
+.pa-header-info h1 {
+    margin: 0 0 4px;
+    font-size: 22px;
     font-weight: 600;
-    font-size: 16px;
 }
 
-.brand-desc,
-.brand-extra {
-    font-size: 11px;
-    line-height: 1.3;
+.pa-header-subtitle {
+    margin: 0 0 4px;
+    font-size: 14px;
     opacity: 0.9;
 }
 
-.app-title {
-    font-size: 14px;
-    font-weight: 500;
-    text-align: right;
-    max-width: 220px;
-}
-
-/* ОСНОВНОЙ КОНТЕНТ */
-
-.main {
-    padding: 24px 0 40px;
-}
-
-.footer {
-    border-top: 1px solid #e5e7eb;
-    padding: 12px 0 24px;
-    font-size: 12px;
-    color: #6b7280;
-}
-
-/* Карты/блоки */
-
-.card {
-    background: #ffffff;
-    border-radius: 10px;
-    padding: 16px 16px 20px;
-    margin-bottom: 16px;
-    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.1);
-}
-
-.card--accent {
-    border-top: 3px solid #0f766e;
-}
-
-h1 {
-    margin: 0 0 6px;
-    font-size: 22px;
-}
-
-.page-subtitle {
-    margin: 0 0 16px;
+.pa-header-director {
+    margin: 0;
     font-size: 13px;
-    color: #6b7280;
+    opacity: 0.9;
 }
 
-/* Форма фильтра */
+/* Основной контейнер */
 
-.filter-form {
+.pa-main {
+    max-width: 1100px;
+    margin: 20px auto 40px;
+    padding: 0 16px;
+}
+
+/* Карточки */
+
+.pa-card {
+    background: #fff;
+    border-radius: 10px;
+    padding: 16px 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+}
+
+.pa-card h2,
+.pa-card h3 {
+    margin-top: 0;
+}
+
+/* Фильтры */
+
+.pa-filters {
     display: flex;
     flex-direction: column;
     gap: 12px;
 }
 
-.filter-grid {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 12px 16px;
-}
-
-.field {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-}
-
-.field label {
-    font-size: 13px;
-    color: #4b5563;
-}
-
-.field input,
-.field select {
-    padding: 8px 10px;
-    border-radius: 6px;
-    border: 1px solid #d1d5db;
-    font-size: 14px;
-    outline: none;
-    background-color: #ffffff;
-}
-
-.field input:focus,
-.field select:focus {
-    border-color: #0f766e;
-    box-shadow: 0 0 0 1px rgba(15, 118, 110, 0.35);
-}
-
-.actions {
+.pa-filters-row {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
+    gap: 12px;
+}
+
+.pa-filters label {
+    display: flex;
+    flex-direction: column;
+    font-size: 13px;
+    min-width: 220px;
+    flex: 1 1 220px;
+}
+
+.pa-filters input[type="text"],
+.pa-filters select {
     margin-top: 4px;
+    padding: 6px 8px;
+    font-size: 14px;
+    border: 1px solid #cfd2dc;
+    border-radius: 6px;
+    outline: none;
+}
+
+.pa-filters input[type="text"]:focus,
+.pa-filters select:focus {
+    border-color: #1b5e20;
+    box-shadow: 0 0 0 1px rgba(27, 94, 32, 0.12);
 }
 
 /* Кнопки */
 
-.btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 999px;
-    border: 1px solid transparent;
-    font-size: 14px;
+.pa-filters-actions {
+    margin-top: 4px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.pa-button-primary,
+.pa-button-secondary,
+.pa-link-button {
+    display: inline-block;
     padding: 6px 14px;
-    cursor: pointer;
-    white-space: nowrap;
-    text-decoration: none;
-}
-
-.btn-primary {
-    background-color: #0f766e;
-    color: #ffffff;
-}
-
-.btn-primary:hover {
-    background-color: #115e56;
-}
-
-.btn-secondary {
-    background-color: #e5e7eb;
-    color: #111827;
-    border-color: #d1d5db;
-}
-
-.btn-secondary:hover {
-    background-color: #d1d5db;
-}
-
-.btn-link {
-    background: none;
-    border: none;
-    color: #0f766e;
-    padding: 0;
-}
-
-.btn-link:hover {
-    text-decoration: underline;
-}
-
-.btn-ghost {
-    background: #f3f4f6;
-    border: 1px solid #e5e7eb;
-    color: #374151;
-}
-
-.btn-ghost:hover {
-    background: #e5e7eb;
-}
-
-/* Таблица */
-
-.results-header {
-    margin-bottom: 8px;
     font-size: 14px;
-    color: #4b5563;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    text-decoration: none;
+    text-align: center;
+    white-space: nowrap;
 }
 
-.table-wrapper {
+.pa-button-primary {
+    background: #1b5e20;
+    color: #fff;
+}
+
+.pa-button-primary:hover {
+    background: #174d1b;
+}
+
+.pa-button-secondary {
+    background: #e0e3ec;
+    color: #222;
+}
+
+.pa-button-secondary:hover {
+    background: #d2d6e3;
+}
+
+.pa-link-button {
+    background: #1976d2;
+    color: #fff;
+}
+
+.pa-link-button:hover {
+    background: #125ca0;
+}
+
+/* Таблица результатов */
+
+.pa-results-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.pa-results-count {
+    font-size: 13px;
+    color: #555;
+}
+
+.pa-table-wrapper {
     width: 100%;
     overflow-x: auto;
 }
 
-.results-table {
+.pa-table {
     width: 100%;
     border-collapse: collapse;
     font-size: 14px;
 }
 
-.results-table thead {
-    background: #f3f4f6;
+.pa-table thead {
+    background: #f0f2f7;
 }
 
-.results-table th,
-.results-table td {
+.pa-table th,
+.pa-table td {
     padding: 8px 10px;
-    border-bottom: 1px solid #e5e7eb;
+    border-bottom: 1px solid #e4e6f0;
     vertical-align: top;
 }
 
-.results-table th {
+.pa-table th {
     text-align: left;
     font-weight: 600;
     white-space: nowrap;
 }
 
-.results-table tbody tr:hover {
-    background-color: #f9fafb;
+.pa-col-description {
+    max-width: 420px;
 }
 
-.actions-cell {
-    white-space: nowrap;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 4px;
-}
+/* Подвал */
 
-/* Бейджи для типов каталогов */
-
-.badge-type {
-    display: inline-block;
-    padding: 2px 8px;
-    border-radius: 999px;
-    font-size: 11px;
-    font-weight: 500;
-}
-
-.badge-type--pdf {
-    background: rgba(37, 99, 235, 0.1);
-    color: #1d4ed8;
-}
-
-.badge-type--online {
-    background: rgba(16, 185, 129, 0.1);
-    color: #047857;
-}
-
-.badge-type--archive {
-    background: rgba(245, 158, 11, 0.15);
-    color: #b45309;
-}
-
-/* Тост уведомление */
-
-.toast {
-    position: fixed;
-    left: 50%;
-    bottom: 24px;
-    transform: translateX(-50%) translateY(20px);
-    background: #111827;
-    color: #fff;
-    padding: 8px 14px;
-    border-radius: 999px;
-    font-size: 13px;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.16s ease-out, transform 0.16s ease-out;
-    z-index: 999;
-}
-
-.toast--visible {
-    opacity: 1;
-    transform: translateX(-50%) translateY(0);
+.pa-footer {
+    text-align: center;
+    font-size: 12px;
+    color: #777;
+    padding: 12px 8px 20px;
 }
 
 /* Адаптив */
 
-@media (max-width: 640px) {
-    .header-inner {
-        flex-direction: column;
+@media (max-width: 768px) {
+    .pa-header {
+        flex-direction: row;
         align-items: flex-start;
     }
 
-    .app-title {
-        text-align: left;
-        max-width: none;
+    .pa-logo {
+        max-height: 56px;
     }
 
-    .filter-grid {
-        grid-template-columns: 1fr;
+    .pa-main {
+        margin-top: 16px;
     }
 
-    .results-table th,
-    .results-table td {
-        padding: 6px 8px;
+    .pa-filters-row {
+        flex-direction: column;
+    }
+
+    .pa-table th,
+    .pa-table td {
+        font-size: 13px;
     }
 }

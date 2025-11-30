@@ -1,68 +1,76 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h1>Подбор каталога запчастей</h1>
-<p class="page-subtitle">
-    Внутренний сервис ОАО «Проземле-Агро» для быстрого поиска каталогов по технике.
-</p>
+<div class="pa-card pa-card-filters">
+    <h2>Каталоги запчастей техники</h2>
 
-<section class="card card--accent">
-    <form method="get" class="filter-form">
-        <div class="filter-grid">
-            <div class="field">
-                <label for="group">Группа техники</label>
-                <select id="group" name="group">
-                    <option value="">Любая</option>
+    <form method="get" class="pa-filters">
+        <div class="pa-filters-row">
+            <label>
+                Группа техники
+                <select name="group">
+                    <option value="">Все</option>
                     {% for g in groups %}
-                        <option value="{{ g }}" {% if selected.group == g %}selected{% endif %}>
+                        <option value="{{ g }}"
+                                {% if g == current_group %}selected{% endif %}>
                             {{ g }}
                         </option>
                     {% endfor %}
                 </select>
-            </div>
+            </label>
 
-            <div class="field">
-                <label for="model">Модель (поиск по подстроке)</label>
-                <input id="model" type="text" name="model" placeholder="например, 82.1"
-                       value="{{ selected.model }}">
-            </div>
+            <label>
+                Модель (фрагмент)
+                <input type="text" name="model"
+                       value="{{ current_model or '' }}"
+                       placeholder="Например: Нива, МТЗ-82, 5551">
+            </label>
+        </div>
 
-            <div class="field">
-                <label for="catalog_type">Тип каталога</label>
-                <select id="catalog_type" name="catalog_type">
-                    <option value="">Любой</option>
+        <div class="pa-filters-row">
+            <label>
+                Тип каталога
+                <select name="catalog_type">
+                    <option value="">Все</option>
                     {% for t in catalog_types %}
-                        <option value="{{ t }}" {% if selected.catalog_type == t %}selected{% endif %}>
+                        <option value="{{ t }}"
+                                {% if t == current_type %}selected{% endif %}>
                             {{ t }}
                         </option>
                     {% endfor %}
                 </select>
-            </div>
+            </label>
 
-            <div class="field">
-                <label for="text">Поиск в описании</label>
-                <input id="text" type="text" name="text" placeholder="ключевое слово"
-                       value="{{ selected.text }}">
-            </div>
+            <label>
+                Поиск по модели / описанию
+                <input type="text" name="query"
+                       value="{{ current_query or '' }}"
+                       placeholder="Любое слово из описания">
+            </label>
         </div>
 
-        <div class="actions">
-            <button type="submit" class="btn btn-primary">Найти</button>
-            <a href="{{ url_for('index') }}" class="btn btn-secondary">Сбросить фильтры</a>
+        <div class="pa-filters-actions">
+            <button type="submit" class="pa-button-primary">
+                Найти
+            </button>
+            <a href="{{ url_for('index') }}" class="pa-button-secondary">
+                Сбросить
+            </a>
         </div>
     </form>
-</section>
+</div>
 
-<section class="card">
-    <div class="results-header">
-        <div>
-            Найдено записей: <strong>{{ results|length }}</strong>
-        </div>
+<div class="pa-card">
+    <div class="pa-results-header">
+        <h3>Результаты поиска</h3>
+        <span class="pa-results-count">
+            {{ records|length }} записей
+        </span>
     </div>
 
-    {% if results %}
-        <div class="table-wrapper">
-            <table class="results-table">
+    {% if records %}
+        <div class="pa-table-wrapper">
+            <table class="pa-table">
                 <thead>
                 <tr>
                     <th>Группа техники</th>
@@ -73,36 +81,21 @@
                 </tr>
                 </thead>
                 <tbody>
-                {% for row in results %}
+                {% for row in records %}
                     <tr>
                         <td>{{ row["Группа техники"] }}</td>
                         <td>{{ row["Модели"] }}</td>
-                        <td>
-                            {% set t = row["Тип каталога"] %}
-                            {% set t_lower = t|lower %}
-                            {% if "онлайн" in t_lower %}
-                                <span class="badge-type badge-type--online">{{ t }}</span>
-                            {% elif "pdf" in t_lower %}
-                                <span class="badge-type badge-type--pdf">{{ t }}</span>
-                            {% elif "архив" in t_lower %}
-                                <span class="badge-type badge-type--archive">{{ t }}</span>
-                            {% else %}
-                                <span class="badge-type">{{ t }}</span>
-                            {% endif %}
+                        <td>{{ row["Тип каталога"] }}</td>
+                        <td class="pa-col-description">
+                            {{ row["Описание"] }}
                         </td>
-                        <td>{{ row["Описание"] }}</td>
-                        <td class="actions-cell">
-                            <a href="{{ row['Ссылка'] }}"
-                               class="btn btn-link"
+                        <td>
+                            <a href="{{ row["Ссылка"] }}"
                                target="_blank"
-                               rel="noopener noreferrer">
+                               rel="noopener"
+                               class="pa-link-button">
                                 Открыть
                             </a>
-                            <button type="button"
-                                    class="btn btn-ghost copy-btn"
-                                    data-link="{{ row['Ссылка'] }}">
-                                Копировать
-                            </button>
                         </td>
                     </tr>
                 {% endfor %}
@@ -110,7 +103,8 @@
             </table>
         </div>
     {% else %}
-        <p>По заданным фильтрам ничего не найдено. Попробуй ослабить критерии поиска.</p>
+        <p>По заданным условиям ничего не найдено.
+            Попробуй ослабить фильтры или изменить запрос.</p>
     {% endif %}
-</section>
+</div>
 {% endblock %}

@@ -2,81 +2,36 @@
 <html lang="ru">
 <head>
     <meta charset="utf-8">
-    <title>Каталоги запчастей · ОАО «Проземле-Агро»</title>
+    <title>Каталоги запчастей — Проземле-Агро</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <!-- Наш CSS -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-<header class="header">
-    <div class="container header-inner">
-        <div class="brand">
-            <img src="{{ url_for('static', filename='99664.gif') }}"
-                 alt="Логотип ОАО «Проземле-Агро»"
-                 class="brand-logo">
-            <div class="brand-text">
-                <div class="brand-name">ОАО «Проземле-Агро»</div>
-                <div class="brand-desc">
-                    Смешанное сельское хозяйство:
-                    мясо-молочное направление, КРС, растениеводство
-                    (зерновые, зернобобовые)
-                </div>
-                <div class="brand-extra">
-                    Директор: Кулаков Виктор Иванович
-                </div>
-            </div>
-        </div>
-        <div class="app-title">
-            Сервис подбора каталогов запчастей
-        </div>
+<header class="pa-header">
+    <div class="pa-header-logo">
+        <img src="{{ url_for('static', filename='99664.gif') }}"
+             alt="Логотип Проземле-Агро"
+             class="pa-logo">
+    </div>
+    <div class="pa-header-info">
+        <h1>Проземле-Агро ОАО</h1>
+        <p class="pa-header-subtitle">
+            Смешанное сельское хозяйство. Мясо-молочное направление, КРС,
+            растениеводство, зерновые, зернобобовые.
+        </p>
+        <p class="pa-header-director">
+            Директор: Кулаков Виктор Иванович
+        </p>
     </div>
 </header>
 
-<main class="main">
-    <div class="container">
-        {% block content %}{% endblock %}
-    </div>
+<main class="pa-main">
+    {% block content %}{% endblock %}
 </main>
 
-<footer class="footer">
-    <div class="container">
-        <small>© ОАО «Проземле-Агро». Внутренний сервис подбора запчастей.</small>
-    </div>
+<footer class="pa-footer">
+    <p>Сервис подбора каталогов запчастей для внутреннего использования Проземле-Агро ОАО.</p>
 </footer>
-
-<script>
-    // Копирование ссылки в буфер обмена
-    document.addEventListener("click", function (e) {
-        if (e.target.matches(".copy-btn")) {
-            const link = e.target.getAttribute("data-link");
-            if (!link) return;
-
-            if (navigator.clipboard && navigator.clipboard.writeText) {
-                navigator.clipboard.writeText(link).then(function () {
-                    showToast("Ссылка скопирована");
-                }).catch(function () {
-                    alert("Скопируйте ссылку вручную:\n" + link);
-                });
-            } else {
-                alert("Скопируйте ссылку вручную:\n" + link);
-            }
-        }
-    });
-
-    function showToast(text) {
-        let toast = document.querySelector(".toast");
-        if (!toast) {
-            toast = document.createElement("div");
-            toast.className = "toast";
-            document.body.appendChild(toast);
-        }
-        toast.textContent = text;
-        toast.classList.add("toast--visible");
-        setTimeout(function () {
-            toast.classList.remove("toast--visible");
-        }, 1500);
-    }
-</script>
-
 </body>
 </html>

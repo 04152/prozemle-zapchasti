@@ -1,79 +1,114 @@
 from pathlib import Path
-from urllib.parse import urlparse
+from urllib.parse import urlsplit
 
 import pandas as pd
 
+
 BASE_DIR = Path(__file__).resolve().parent
+DATA_FILE = BASE_DIR / "Каталоги_запчастей_ПроземлеАгро.xlsx"
 
-# Если имя файла у тебя другое — ПОДПРАВЬ эту строку
-DATA_FILE = BASE_DIR / "Каталоги_запчастей_ПроземлеАгро_очищено.xlsx"
-
-REQUIRED_COLUMNS = [
-    "Группа техники",
-    "Модели",
-    "Тип каталога",
-    "Описание",
-    "Ссылка",
-]
-
-# Домены, которые считаем платными/закрытыми/проблемными
+# Доменам отсюда мы не доверяем (платные/закрытые/проблемные каталоги)
 BLOCKED_DOMAINS = {
     "machinetechdoc.com",
     "servicepartmanuals.com",
     "interdalnoboy.com",
     "www.avtozapchasty.ru",
+    "avtozapchasty.ru",
     "avtofiles.com",
     "www.niva-club.net",
+    "niva-club.net",
 }
 
 
-def _get_domain(url: str) -> str:
-    try:
-        return urlparse((url or "").strip()).netloc.lower()
-    except Exception:
-        return ""
+def _is_allowed_row(row: pd.Series) -> bool:
+    """
+    Фильтрация строк с точки зрения доступности ссылки:
+    - есть ли URL
+    - не попадает ли домен в чёрный список
+    - не помечен ли каталог как 'Платный'
+    """
+    url = str(row.get("Ссылка", "")).strip()
+    if not url:
+        return False
+
+    # только http/https
+    if not (url.startswith("http://") or url.startswith("https://")):
+        return False
+
+    netloc = urlsplit(url).netloc.lower()
+
+    if netloc in BLOCKED_DOMAINS:
+        return False
+
+    catalog_type = str(row.get("Тип каталога", "")).lower()
+    if "платный" in catalog_type:
+        return False
+
+    return True
 
 
 def load_catalog_df() -> pd.DataFrame:
     """
-    Загружаем Excel, чистим данные и убираем платные/проблемные ссылки.
+    Загружает Excel, очищает базу (удаляет пустые/заблокированные ссылки),
+    подготавливает к использованию в приложении.
     """
     if not DATA_FILE.exists():
-        raise FileNotFoundError(f"Файл с каталогами не найден: {DATA_FILE}")
+        raise FileNotFoundError(f"Не найден файл с каталогами: {DATA_FILE}")
 
-    df = pd.read_excel(DATA_FILE, sheet_name="Sheet1")
+    df = pd.read_excel(DATA_FILE)
 
-    # Проверяем наличие нужных колонок
-    missing = [c for c in REQUIRED_COLUMNS if c not in df.columns]
+    required_cols = {"Группа техники", "Модели", "Тип каталога", "Описание", "Ссылка"}
+    missing = required_cols - set(df.columns)
     if missing:
-        raise KeyError(
-            "В Excel не хватает обязательных колонок: " + ", ".join(missing)
-        )
+        raise ValueError(f"В Excel отсутствуют обязательные столбцы: {', '.join(missing)}")
 
-    # Заполняем пропуски строками, чтобы не падали фильтры
-    for col in REQUIRED_COLUMNS:
-        df[col] = df[col].fillna("")
+    # убираем пустые ссылки
+    df = df.dropna(subset=["Ссылка"]).copy()
 
-    # Чистим и нормализуем ссылки
-    df["Ссылка"] = df["Ссылка"].astype(str).str.strip()
-    df = df[df["Ссылка"].str.startswith("http")]
+    # фильтруем по доменам и 'Платный'
+    df = df[df.apply(_is_allowed_row, axis=1)].copy()
 
-    # Если в файле есть колонка 'Статус_ссылки' (после проверки validate_links.py),
-    # то берём только хорошие ссылки
-    if "Статус_ссылки" in df.columns:
-        df["Статус_ссылки"] = df["Статус_ссылки"].astype(str).str.lower()
-        df = df[df["Статус_ссылки"] == "ok"]
+    # нормализуем текст
+    for col in ["Группа техники", "Модели", "Тип каталога", "Описание", "Ссылка"]:
+        df[col] = df[col].astype(str).str.strip()
 
-    # Фильтрация по доменам
-    df["domain"] = df["Ссылка"].apply(_get_domain)
-    df = df[~df["domain"].isin(BLOCKED_DOMAINS)]
-
-    # Немного наводим порядок
-    df = df.sort_values(
-        ["Группа техники", "Модели", "Тип каталога"]
-    ).reset_index(drop=True)
-
-    # domain во фронтенд не нужен
-    df = df.drop(columns=["domain"])
+    # сортировка для аккуратного вывода
+    df = df.sort_values(["Группа техники", "Модели", "Тип каталога"]).reset_index(drop=True)
 
     return df
+
+
+def filter_catalog(
+    df: pd.DataFrame,
+    group: str | None = None,
+    model: str | None = None,
+    catalog_type: str | None = None,
+    query: str | None = None,
+) -> pd.DataFrame:
+    """
+    Универсальный фильтр каталога по параметрам.
+    """
+    result = df
+
+    if group:
+        result = result[result["Группа техники"] == group]
+
+    if model:
+        pattern = str(model).strip()
+        if pattern:
+            mask = result["Модели"].str.contains(pattern, case=False, na=False)
+            result = result[mask]
+
+    if catalog_type:
+        result = result[result["Тип каталога"] == catalog_type]
+
+    if query:
+        pattern = str(query).strip()
+        if pattern:
+            mask = (
+                result["Модели"].str.contains(pattern, case=False, na=False)
+                | result["Описание"].str.contains(pattern, case=False, na=False)
+            )
+            result = result[mask]
+
+    return result.reset_index(drop=True)
