@@ -4,18 +4,10 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="14a4daf0-e3fa-4190-b6c9-32ebe0de75d3" name="Changes" comment="Initial commit_v 2.4">
-      <change afterPath="$PROJECT_DIR$/templates/admin_login.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/templates/admin_logs.html" afterDir="false" />
+    <list default="true" id="14a4daf0-e3fa-4190-b6c9-32ebe0de75d3" name="Changes" comment="Initial commit_v 2.5">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app.py" beforeDir="false" afterPath="$PROJECT_DIR$/app.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/catalogs.db" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/db.py" beforeDir="false" afterPath="$PROJECT_DIR$/db.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/requirements.txt" beforeDir="false" afterPath="$PROJECT_DIR$/requirements.txt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/static/style.css" beforeDir="false" afterPath="$PROJECT_DIR$/static/style.css" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/base.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/base.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Запчасти.zip" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Каталоги_запчастей_ПроземлеАгро.xlsx" beforeDir="false" afterPath="$PROJECT_DIR$/Каталоги_запчастей_ПроземлеАгро.xlsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/index.html" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -177,7 +169,7 @@
       <workItem from="1764567823119" duration="2344000" />
       <workItem from="1764575500317" duration="905000" />
       <workItem from="1764578365561" duration="3809000" />
-      <workItem from="1764583786425" duration="6256000" />
+      <workItem from="1764583786425" duration="7874000" />
     </task>
     <task id="LOCAL-00001" summary="Initial commit">
       <option name="closed" value="true" />
@@ -227,7 +219,15 @@
       <option name="project" value="LOCAL" />
       <updated>1764581570019</updated>
     </task>
-    <option name="localTasksCounter" value="7" />
+    <task id="LOCAL-00007" summary="Initial commit_v 2.5">
+      <option name="closed" value="true" />
+      <created>1764594190247</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1764594190247</updated>
+    </task>
+    <option name="localTasksCounter" value="8" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -238,10 +238,11 @@
     <MESSAGE value="Initial commit_v1" />
     <MESSAGE value="Initial commit_v 2.0" />
     <MESSAGE value="Initial commit_v 2.4" />
-    <option name="LAST_COMMIT_MESSAGE" value="Initial commit_v 2.4" />
+    <MESSAGE value="Initial commit_v 2.5" />
+    <option name="LAST_COMMIT_MESSAGE" value="Initial commit_v 2.5" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/$validate_links.coverage" NAME="validate_links Coverage Results" MODIFIED="1764567879382" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
-    <SUITE FILE_PATH="coverage/$app.coverage" NAME="app Coverage Results" MODIFIED="1764594018983" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/$app.coverage" NAME="app Coverage Results" MODIFIED="1764595325066" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>
 </project>

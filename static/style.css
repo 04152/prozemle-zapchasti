@@ -202,7 +202,7 @@ body {
 
 .pa-results-header {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: space-between;
     gap: 0.75rem;
     margin-bottom: 0.75rem;
@@ -212,6 +212,12 @@ body {
     margin: 0;
     font-size: 1.1rem;
     letter-spacing: 0.02em;
+}
+
+.pa-results-subtitle {
+    font-size: 0.8rem;
+    color: #6b7280;
+    margin-top: 0.15rem;
 }
 
 /* =========================
@@ -296,8 +302,25 @@ body {
     padding: 0.35rem 0.5rem;
 }
 
-.pa-table tbody tr:hover {
-    background: #f3f4f6;
+/* Подсветка строк каталога */
+
+.pa-table-catalog tbody tr {
+    transition: background 0.12s ease, box-shadow 0.12s ease, transform 0.08s ease;
+}
+
+.pa-table-catalog tbody tr:hover {
+    background: #f9fafb;
+    box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08);
+    transform: translateY(-1px);
+}
+
+.pa-col-group,
+.pa-col-model,
+.pa-col-type,
+.pa-col-desc,
+.pa-col-domain,
+.pa-col-actions {
+    vertical-align: top;
 }
 
 /* Логи: длинные поля */
@@ -411,6 +434,11 @@ body {
     margin-bottom: 0.5rem;
 }
 
+.pa-filters-row-bottom {
+    margin-top: 0.5rem;
+    align-items: flex-start;
+}
+
 .pa-filters-actions {
     display: flex;
     flex-wrap: wrap;
@@ -447,8 +475,28 @@ body {
     resize: vertical;
 }
 
+.pa-field-label {
+    display: block;
+    font-size: 0.78rem;
+    color: #6b7280;
+    margin-bottom: 0.15rem;
+}
+
+.pa-checkbox-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.85rem;
+    color: #374151;
+}
+
+.pa-checkbox-label input[type="checkbox"] {
+    width: 1rem;
+    height: 1rem;
+}
+
 /* =========================
-   БЕЙДЖИ / ИКОНКИ
+   БЕЙДЖИ / ИКОНКИ / МЕТА
    ========================= */
 
 .pa-badge {
@@ -510,9 +558,131 @@ body {
     font-size: 1.1rem;
 }
 
+.pa-note-inline {
+    margin-top: 0.25rem;
+    font-size: 0.78rem;
+    color: #4b5563;
+}
+
+.pa-note-label {
+    font-weight: 600;
+    margin-right: 0.2rem;
+}
+
+.pa-source-block {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+}
+
+.pa-domain-text {
+    font-size: 0.78rem;
+    color: #6b7280;
+    word-break: break-all;
+}
+
+/* Метаданные (сохранённые/недавние запросы) */
+
+.pa-meta-block {
+    flex: 1 1 0;
+    min-width: 0;
+}
+
+.pa-meta-title {
+    font-size: 0.8rem;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+    color: #4b5563;
+}
+
+.pa-meta-empty {
+    font-size: 0.8rem;
+    color: #9ca3af;
+}
+
+.pa-meta-list {
+    margin: 0;
+    padding-left: 1rem;
+    font-size: 0.8rem;
+    color: #4b5563;
+}
+
+.pa-chip-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+}
+
+.pa-chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.2rem 0.55rem;
+    border-radius: 999px;
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    font-size: 0.78rem;
+    text-decoration: none;
+    color: #1d4ed8;
+}
+
+.pa-chip:hover {
+    background: #dbeafe;
+}
+
+/* Результаты: счётчик и подсказки */
+
+.pa-results-info {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.85rem;
+}
+
+.pa-results-count {
+    font-weight: 600;
+    color: #111827;
+}
+
+.pa-results-count-empty {
+    color: #b91c1c;
+}
+
+.pa-results-pill {
+    padding: 0.1rem 0.5rem;
+    border-radius: 999px;
+    background: #fef3c7;
+    color: #92400e;
+    font-size: 0.78rem;
+    border: 1px solid #facc15;
+}
+
+.pa-empty-hint {
+    font-size: 0.85rem;
+    color: #6b7280;
+    margin-top: 0.2rem;
+}
+
+/* Действия в строке */
+
+.pa-row-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+    align-items: center;
+}
+
+.pa-row-action-inline {
+    display: inline-flex;
+}
+
 /* =========================
    АДАПТИВНОСТЬ
    ========================= */
+
+.pa-td-label {
+    display: none;
+}
 
 @media (max-width: 1024px) {
     .pa-stats-grid {
@@ -594,6 +764,51 @@ body {
         flex-direction: column;
         align-items: flex-start;
         gap: 0.15rem;
+    }
+
+    /* Каталоги как карточки */
+
+    .pa-table-catalog thead {
+        display: none;
+    }
+
+    .pa-table-catalog tbody {
+        display: flex;
+        flex-direction: column;
+        gap: 0.6rem;
+    }
+
+    .pa-table-catalog tr {
+        display: block;
+        background: #ffffff;
+        border-radius: 0.85rem;
+        border: 1px solid #e5e7eb;
+        padding: 0.55rem 0.6rem;
+        box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08);
+        transform: none;
+    }
+
+    .pa-table-catalog td {
+        display: block;
+        padding: 0.15rem 0;
+        border-bottom: none;
+    }
+
+    .pa-td-label {
+        display: block;
+        font-size: 0.72rem;
+        color: #6b7280;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        margin-bottom: 0.02rem;
+    }
+
+    .pa-col-actions {
+        margin-top: 0.35rem;
+    }
+
+    .pa-row-actions {
+        justify-content: flex-start;
     }
 }
 

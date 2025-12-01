@@ -1,208 +1,113 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="pa-card pa-card-filters">
-    <div class="pa-filters-header">
-        <h2>Каталоги запчастей техники</h2>
-
-        <!-- Кнопка обновления базы с паролем -->
-        <form method="post" action="{{ url_for('refresh') }}" class="pa-refresh-form">
-            <input type="password"
-                   name="token"
-                   class="pa-input-token"
-                   placeholder="Пароль">
-            <button type="submit" class="pa-button-secondary">
-                Обновить базу из Excel
-            </button>
-        </form>
+<div class="pa-card">
+    <div class="pa-results-header">
+        <div>
+            <h2>Поиск по каталогам запчастей</h2>
+            <div class="pa-results-subtitle">
+                Подбор по технике, типу каталога, стране источника и свободному поиску
+            </div>
+        </div>
     </div>
 
-    <!-- Сообщения (flash) -->
-    {% with messages = get_flashed_messages(with_categories=true) %}
-      {% if messages %}
-        <div class="pa-flash-container">
-          {% for category, message in messages %}
-            <div class="pa-flash pa-flash-{{ category }}">
-              {{ message }}
-            </div>
-          {% endfor %}
-        </div>
-      {% endif %}
-    {% endwith %}
-
-    <form method="get" class="pa-filters">
-        <div class="pa-filters-row">
-            <label>
-                Группа техники
-                <select name="group">
-                    <option value="">Все</option>
+    <form method="get" action="{{ url_for('index') }}">
+        <div class="pa-filters-grid">
+            <div>
+                <label class="pa-field-label">Группа техники</label>
+                <select name="group" class="pa-select">
+                    <option value="">Все группы</option>
                     {% for g in groups %}
-                        <option value="{{ g }}"
-                                {% if g == current_group %}selected{% endif %}>
-                            {{ g }}
-                        </option>
+                        <option value="{{ g }}" {% if current_group == g %}selected{% endif %}>{{ g }}</option>
                     {% endfor %}
                 </select>
-            </label>
-
-            <label>
-                Модель (фрагмент)
-                <input type="text" name="model"
-                       value="{{ current_model }}"
-                       placeholder="Например: Нива, МТЗ-82, 5551">
-            </label>
-        </div>
-
-        <div class="pa-filters-row">
-            <label>
-                Тип каталога
-                <select name="catalog_type">
-                    <option value="">Все</option>
+            </div>
+            <div>
+                <label class="pa-field-label">Модель / техника</label>
+                <input type="text" name="model" class="pa-input"
+                       placeholder="например: МТЗ-82, КВК-800, Нива"
+                       value="{{ current_model }}">
+            </div>
+            <div>
+                <label class="pa-field-label">Тип каталога</label>
+                <select name="catalog_type" class="pa-select">
+                    <option value="">Все типы</option>
                     {% for t in catalog_types %}
-                        <option value="{{ t }}"
-                                {% if t == current_type %}selected{% endif %}>
-                            {{ t }}
-                        </option>
+                        <option value="{{ t }}" {% if current_type == t %}selected{% endif %}>{{ t }}</option>
                     {% endfor %}
                 </select>
-            </label>
-
-            <label>
-                Страна сайта
-                <select name="country">
+            </div>
+            <div>
+                <label class="pa-field-label">Страна источника</label>
+                <select name="country" class="pa-select">
                     <option value="">Все</option>
                     {% for c in countries %}
                         {% if c %}
-                            <option value="{{ c }}"
-                                    {% if c == current_country %}selected{% endif %}>
-                                {{ c }}
+                            <option value="{{ c }}" {% if current_country == c %}selected{% endif %}>
+                                {% if c == "BY" %}BY (Беларусь){% elif c == "RU" %}RU (Россия){% elif c == "OTHER" %}Другие{% else %}{{ c }}{% endif %}
                             </option>
                         {% endif %}
                     {% endfor %}
                 </select>
-            </label>
+            </div>
         </div>
 
         <div class="pa-filters-row">
-            <label style="flex: 1 1 100%;">
-                Поиск по модели / описанию / ссылке / номерам
-                <input type="text" name="query"
-                       value="{{ current_query }}"
-                       placeholder="Например: niva 21213 мост или 01.2022">
-            </label>
+            <div style="flex: 1 1 auto;">
+                <label class="pa-field-label">Общий поиск</label>
+                <input type="text" name="query" class="pa-input"
+                       placeholder="Поиск по модели, описанию, номеру каталога, каталожному номеру…"
+                       value="{{ current_query }}">
+            </div>
         </div>
 
         <div class="pa-filters-row">
-            <label class="pa-checkbox-inline">
-                <input type="checkbox" name="favorites_only" value="1"
-                       {% if favorites_only %}checked{% endif %}>
-                Только избранные
+            <label class="pa-checkbox-label">
+                <input type="checkbox" name="favorites_only" value="1" {% if favorites_only %}checked{% endif %}>
+                <span>Только избранные</span>
             </label>
-        </div>
 
-        <div class="pa-filters-actions">
-            <button type="submit" class="pa-button-primary">
-                Найти
-            </button>
-            <a href="{{ url_for('index') }}" class="pa-button-secondary">
-                Сбросить
-            </a>
-        </div>
-
-        <div class="pa-hints">
-            <strong>Примеры запросов:</strong>
-            <span>«niva 21213»</span>
-            <span>«СК-5 Нива»</span>
-            <span>«mtz 82 каталог pdf»</span>
-            <span>«01.2022»</span>
+            <div class="pa-filters-actions">
+                <button type="submit" class="pa-button-primary">
+                    Найти
+                </button>
+                <a href="{{ url_for('index') }}" class="pa-button-secondary">
+                    Сбросить
+                </a>
+            </div>
         </div>
     </form>
 
-    <div class="pa-aux-blocks">
-        <div class="pa-aux-block">
-            <h4>Последние запросы</h4>
-            {% if recent_searches %}
-                <ul class="pa-aux-list">
-                    {% for s in recent_searches %}
-                        <li>
-                            <a href="{{ url_for('index',
-                                                group=s.group_name,
-                                                model=s.model_fragment,
-                                                catalog_type=s.catalog_type,
-                                                country=s.country,
-                                                query=s.query) }}">
-                                {% if s.query %}
-                                    «{{ s.query }}»
-                                {% else %}
-                                    без текстового поиска
-                                {% endif %}
-                                {% if s.group_name %}
-                                    <span class="pa-aux-tag">{{ s.group_name }}</span>
-                                {% endif %}
-                                {% if s.model_fragment %}
-                                    <span class="pa-aux-tag">{{ s.model_fragment }}</span>
-                                {% endif %}
-                                {% if s.catalog_type %}
-                                    <span class="pa-aux-tag">{{ s.catalog_type }}</span>
-                                {% endif %}
-                                {% if s.country %}
-                                    <span class="pa-aux-tag">{{ s.country }}</span>
-                                {% endif %}
-                            </a>
-                        </li>
+    <div class="pa-filters-row pa-filters-row-bottom">
+        <div class="pa-meta-block">
+            <div class="pa-meta-title">Сохранённые запросы</div>
+            {% if saved_queries %}
+                <div class="pa-chip-row">
+                    {% for sq in saved_queries %}
+                        <a href="{{ url_for('use_query', query_id=sq.id) }}" class="pa-chip">
+                            {{ sq.title }}
+                        </a>
                     {% endfor %}
-                </ul>
+                </div>
             {% else %}
-                <p class="pa-aux-empty">Пока нет истории запросов.</p>
+                <div class="pa-meta-empty">Пока нет сохранённых запросов.</div>
             {% endif %}
         </div>
 
-        <div class="pa-aux-block">
-            <h4>Сохранённые шаблоны</h4>
-
-            <form method="post"
-                  action="{{ url_for('save_query') }}"
-                  class="pa-save-query-form">
-                <input type="hidden" name="group" value="{{ current_group }}">
-                <input type="hidden" name="model" value="{{ current_model }}">
-                <input type="hidden" name="catalog_type" value="{{ current_type }}">
-                <input type="hidden" name="query" value="{{ current_query }}">
-                <input type="hidden" name="country" value="{{ current_country }}">
-                <input type="hidden" name="favorites_only" value="{{ '1' if favorites_only else '' }}">
-
-                <input type="text" name="title" placeholder="Название шаблона">
-                <button type="submit" class="pa-button-secondary pa-button-small">
-                    Сохранить текущий запрос
-                </button>
-            </form>
-
-            {% if saved_queries %}
-                <ul class="pa-aux-list">
-                    {% for q in saved_queries %}
+        <div class="pa-meta-block">
+            <div class="pa-meta-title">Недавние поиски</div>
+            {% if recent_searches %}
+                <ul class="pa-meta-list">
+                    {% for s in recent_searches %}
                         <li>
-                            <a href="{{ url_for('use_query', query_id=q.id) }}">
-                                {{ q.title }}
-                                {% if q.group_name %}
-                                    <span class="pa-aux-tag">{{ q.group_name }}</span>
-                                {% endif %}
-                                {% if q.model_fragment %}
-                                    <span class="pa-aux-tag">{{ q.model_fragment }}</span>
-                                {% endif %}
-                                {% if q.catalog_type %}
-                                    <span class="pa-aux-tag">{{ q.catalog_type }}</span>
-                                {% endif %}
-                                {% if q.country %}
-                                    <span class="pa-aux-tag">{{ q.country }}</span>
-                                {% endif %}
-                                {% if q.query %}
-                                    <span class="pa-aux-tag">«{{ q.query }}»</span>
-                                {% endif %}
-                            </a>
+                            {% if s.group_name %}<strong>{{ s.group_name }}</strong>{% endif %}
+                            {% if s.model_fragment %} · {{ s.model_fragment }}{% endif %}
+                            {% if s.query %} · «{{ s.query }}»{% endif %}
                         </li>
                     {% endfor %}
                 </ul>
             {% else %}
-                <p class="pa-aux-empty">Шаблонов ещё нет.</p>
+                <div class="pa-meta-empty">История поиска пока пуста.</div>
             {% endif %}
         </div>
     </div>
@@ -210,101 +115,122 @@
 
 <div class="pa-card">
     <div class="pa-results-header">
-        <h3>Результаты поиска</h3>
-        <span class="pa-results-count">
-            {{ records|length }} записей
-        </span>
+        <h2>Результаты поиска</h2>
+        <div class="pa-results-info">
+            {% set count = records|length %}
+            {% if count > 0 %}
+                <span class="pa-results-count">Найдено: {{ count }}</span>
+                {% if favorites_only %}
+                    <span class="pa-results-pill">Показаны только избранные</span>
+                {% endif %}
+            {% else %}
+                <span class="pa-results-count pa-results-count-empty">Совпадений не найдено</span>
+            {% endif %}
+        </div>
     </div>
 
-    {% if records %}
+    {% if not records %}
+        <p class="pa-empty-hint">
+            Попробуйте убрать часть фильтров или изменить текст запроса.
+            Часто помогает поиск только по модели (например, «МТЗ-82» или «КВК-800»).
+        </p>
+    {% else %}
         <div class="pa-table-wrapper">
-            <table class="pa-table">
+            <table class="pa-table pa-table-compact pa-table-catalog">
                 <thead>
                 <tr>
-                    <th>Группа техники</th>
-                    <th>Модели</th>
+                    <th>Группа</th>
+                    <th>Модель / техника</th>
                     <th>Тип</th>
-                    <th>Статус</th>
                     <th>Описание</th>
                     <th>Источник</th>
-                    <th>Ссылка</th>
+                    <th>Действия</th>
                 </tr>
                 </thead>
                 <tbody>
-                {% for row in records %}
+                {% for rec in records %}
                     <tr>
-                        <td>{{ row.group_name }}</td>
-                        <td>{{ row.models | highlight(current_query) }}</td>
-                        <td>{{ row.catalog_type }}</td>
-                        <td>
-                            {% if row.status %}
-                                <span class="pa-status pa-status-{{ row.status|lower|replace(' ', '-') }}">
-                                    {{ row.status }}
-                                </span>
-                            {% else %}
-                                <span class="pa-status pa-status-unknown">—</span>
+                        <td class="pa-col-group">
+                            <span class="pa-td-label">Группа</span>
+                            {{ rec.group_name }}
+                        </td>
+                        <td class="pa-col-model">
+                            <span class="pa-td-label">Модель</span>
+                            {{ rec.models|highlight(current_model or current_query) }}
+                        </td>
+                        <td class="pa-col-type">
+                            <span class="pa-td-label">Тип</span>
+                            {{ rec.catalog_type }}
+                        </td>
+                        <td class="pa-col-desc">
+                            <span class="pa-td-label">Описание</span>
+                            {{ rec.description|highlight(current_query) }}
+                            {% if rec.engineer_note %}
+                                <div class="pa-note-inline">
+                                    <span class="pa-note-label">Заметка:</span> {{ rec.engineer_note }}
+                                </div>
                             {% endif %}
                         </td>
-                        <td class="pa-col-description">
-                            {{ row.description | highlight(current_query) }}
-                            <a href="{{ url_for('edit_note',
-                                                catalog_id=row.id,
-                                                group=current_group,
-                                                model=current_model,
-                                                catalog_type=current_type,
-                                                query=current_query,
-                                                country=current_country,
-                                                favorites_only='1' if favorites_only else '') }}"
-                               class="pa-note-link"
-                               title="{% if row.engineer_note %}{{ row.engineer_note }}{% else %}Добавить примечание{% endif %}">
-                                📝
-                            </a>
+                        <td class="pa-col-domain">
+                            <span class="pa-td-label">Источник</span>
+                            <div class="pa-source-block">
+                                {% if rec.source_country %}
+                                    <span class="pa-badge
+                                        {% if rec.source_country == 'BY' %}pa-badge-source-official
+                                        {% elif rec.source_country == 'RU' %}pa-badge-source-shop
+                                        {% else %}pa-badge-source-forum{% endif %}">
+                                        {% if rec.source_country == 'BY' %}BY{% elif rec.source_country == 'RU' %}RU{% else %}{{ rec.source_country }}{% endif %}
+                                    </span>
+                                {% endif %}
+                                {% if rec.domain %}
+                                    <div class="pa-domain-text">{{ rec.domain }}</div>
+                                {% endif %}
+                            </div>
                         </td>
-                        <td>
-                            {{ row.domain }}
-                            {% if row.source_country %}
-                                <span class="pa-badge-country">{{ row.source_country }}</span>
-                            {% endif %}
-                            {% if row.source_type %}
-                                <span class="pa-badge-source">{{ row.source_type }}</span>
-                            {% endif %}
+                        <td class="pa-col-actions">
+                            <div class="pa-row-actions">
+                                <a href="{{ url_for('open_catalog', catalog_id=rec.id) }}"
+                                   class="pa-button-primary pa-button-small"
+                                   target="_blank" rel="noopener">
+                                    Открыть
+                                </a>
 
-                            <form method="post"
-                                  action="{{ url_for('toggle_favorite', catalog_id=row.id) }}"
-                                  class="pa-fav-form">
-                                <input type="hidden" name="group" value="{{ current_group }}">
-                                <input type="hidden" name="model" value="{{ current_model }}">
-                                <input type="hidden" name="catalog_type" value="{{ current_type }}">
-                                <input type="hidden" name="query" value="{{ current_query }}">
-                                <input type="hidden" name="country" value="{{ current_country }}">
-                                <input type="hidden" name="favorites_only" value="{{ '1' if favorites_only else '' }}">
-                                <button type="submit"
-                                        class="pa-star-button"
-                                        title="Переключить избранное">
-                                    {% if row.favorite %}
-                                        ★
-                                    {% else %}
-                                        ☆
-                                    {% endif %}
-                                </button>
-                            </form>
-                        </td>
-                        <td>
-                            <a href="{{ url_for('open_catalog', catalog_id=row.id) }}"
-                               target="_blank"
-                               rel="noopener"
-                               class="pa-link-button">
-                                Открыть
-                            </a>
+                                <form method="post"
+                                      action="{{ url_for('toggle_favorite', catalog_id=rec.id) }}"
+                                      class="pa-row-action-inline">
+                                    <input type="hidden" name="group" value="{{ current_group }}">
+                                    <input type="hidden" name="model" value="{{ current_model }}">
+                                    <input type="hidden" name="catalog_type" value="{{ current_type }}">
+                                    <input type="hidden" name="query" value="{{ current_query }}">
+                                    <input type="hidden" name="country" value="{{ current_country }}">
+                                    <input type="hidden" name="favorites_only" value="{% if favorites_only %}1{% else %}0{% endif %}">
+                                    <button type="submit" class="pa-favorite-toggle" title="Пометить как избранное">
+                                        {% if rec.favorite %}
+                                            <span>★</span>
+                                        {% else %}
+                                            <span>☆</span>
+                                        {% endif %}
+                                    </button>
+                                </form>
+
+                                <a href="{{ url_for('edit_note',
+                                                    catalog_id=rec.id,
+                                                    group=current_group,
+                                                    model=current_model,
+                                                    catalog_type=current_type,
+                                                    query=current_query,
+                                                    country=current_country,
+                                                    favorites_only='1' if favorites_only else '') }}"
+                                   class="pa-button-secondary pa-button-small">
+                                    Заметка
+                                </a>
+                            </div>
                         </td>
                     </tr>
                 {% endfor %}
                 </tbody>
             </table>
         </div>
-    {% else %}
-        <p>По заданным условиям ничего не найдено.
-            Попробуй ослабить фильтры или изменить запрос.</p>
     {% endif %}
 </div>
 {% endblock %}
