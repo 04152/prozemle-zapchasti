@@ -1,6 +1,8 @@
-/* Базовые стили */
+/* БАЗОВЫЕ СТИЛИ */
 
-* {
+*,
+*::before,
+*::after {
     box-sizing: border-box;
 }
 
@@ -12,7 +14,7 @@ body {
     color: #222;
 }
 
-/* Шапка */
+/* ШАПКА */
 
 .pa-header {
     display: flex;
@@ -53,7 +55,7 @@ body {
     opacity: 0.9;
 }
 
-/* Основной контейнер */
+/* ОСНОВНОЙ КОНТЕНТ */
 
 .pa-main {
     max-width: 1100px;
@@ -61,7 +63,7 @@ body {
     padding: 0 16px;
 }
 
-/* Карточки */
+/* КАРТОЧКИ */
 
 .pa-card {
     background: #fff;
@@ -76,7 +78,15 @@ body {
     margin-top: 0;
 }
 
-/* Фильтры */
+/* ФИЛЬТРЫ */
+
+.pa-filters-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+}
 
 .pa-filters {
     display: flex;
@@ -106,6 +116,7 @@ body {
     border: 1px solid #cfd2dc;
     border-radius: 6px;
     outline: none;
+    background: #fff;
 }
 
 .pa-filters input[type="text"]:focus,
@@ -114,7 +125,7 @@ body {
     box-shadow: 0 0 0 1px rgba(27, 94, 32, 0.12);
 }
 
-/* Кнопки */
+/* КНОПКИ */
 
 .pa-filters-actions {
     margin-top: 4px;
@@ -164,7 +175,49 @@ body {
     background: #125ca0;
 }
 
-/* Таблица результатов */
+/* ПОДСКАЗКИ */
+
+.pa-hints {
+    margin-top: 8px;
+    font-size: 12px;
+    color: #666;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.pa-hints span {
+    background: #f0f2f7;
+    padding: 2px 8px;
+    border-radius: 999px;
+}
+
+/* FLASH-СООБЩЕНИЯ */
+
+.pa-flash-container {
+    margin-bottom: 8px;
+}
+
+.pa-flash {
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 13px;
+    margin-bottom: 4px;
+}
+
+.pa-flash-success {
+    background: #e8f5e9;
+    color: #1b5e20;
+    border: 1px solid #a5d6a7;
+}
+
+.pa-flash-error {
+    background: #ffebee;
+    color: #c62828;
+    border: 1px solid #ef9a9a;
+}
+
+/* ТАБЛИЦА РЕЗУЛЬТАТОВ */
 
 .pa-results-header {
     display: flex;
@@ -211,7 +264,19 @@ body {
     max-width: 420px;
 }
 
-/* Подвал */
+/* БЕЙДЖ СТРАНЫ */
+
+.pa-badge-country {
+    display: inline-block;
+    margin-left: 4px;
+    padding: 0 6px;
+    border-radius: 999px;
+    font-size: 11px;
+    background: #e0e3ec;
+    color: #333;
+}
+
+/* ПОДВАЛ */
 
 .pa-footer {
     text-align: center;
@@ -220,7 +285,14 @@ body {
     padding: 12px 8px 20px;
 }
 
-/* Адаптив */
+/* ПОДСВЕТКА ПОИСКА */
+
+mark {
+    background: #fff59d;
+    padding: 0 1px;
+}
+
+/* АДАПТИВ */
 
 @media (max-width: 768px) {
     .pa-header {

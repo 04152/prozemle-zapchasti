@@ -87,28 +87,52 @@ def filter_catalog(
 ) -> pd.DataFrame:
     """
     Универсальный фильтр каталога по параметрам.
+    query — текстовый поиск по Модели / Описанию / Ссылке /
+            а также по дополнительным колонкам, если они есть
+            (Номер каталога, Каталожный номер и т.п.).
     """
     result = df
 
+    # Фильтр по группе техники (точное совпадение)
     if group:
         result = result[result["Группа техники"] == group]
 
+    # Фильтр по модели (подстрока в колонке "Модели")
     if model:
         pattern = str(model).strip()
         if pattern:
-            mask = result["Модели"].str.contains(pattern, case=False, na=False)
-            result = result[mask]
+            mask_model = result["Модели"].str.contains(pattern, case=False, na=False)
+            result = result[mask_model]
 
+    # Фильтр по типу каталога
     if catalog_type:
         result = result[result["Тип каталога"] == catalog_type]
 
+    # Универсальный текстовый поиск
     if query:
         pattern = str(query).strip()
         if pattern:
-            mask = (
-                result["Модели"].str.contains(pattern, case=False, na=False)
-                | result["Описание"].str.contains(pattern, case=False, na=False)
-            )
-            result = result[mask]
+            # Список колонок, в которых будем искать текст
+            candidate_cols = [
+                "Модели",
+                "Описание",
+                "Ссылка",
+                "Номер каталога",
+                "Каталожный номер",
+                "Каталожный номер детали",
+            ]
+
+            masks = []
+            for col in candidate_cols:
+                if col in result.columns:
+                    masks.append(result[col].str.contains(pattern, case=False, na=False))
+
+            if masks:
+                # Объединяем все маски через ИЛИ
+                combined = masks[0]
+                for m in masks[1:]:
+                    combined = combined | m
+                result = result[combined]
 
     return result.reset_index(drop=True)
+

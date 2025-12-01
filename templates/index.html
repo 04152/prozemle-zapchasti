@@ -2,7 +2,29 @@
 
 {% block content %}
 <div class="pa-card pa-card-filters">
-    <h2>Каталоги запчастей техники</h2>
+    <div class="pa-filters-header">
+        <h2>Каталоги запчастей техники</h2>
+
+        <!-- Кнопка обновления базы -->
+        <form method="post" action="{{ url_for('refresh') }}">
+            <button type="submit" class="pa-button-secondary">
+                Обновить базу из Excel
+            </button>
+        </form>
+    </div>
+
+    <!-- Сообщения (flash) -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="pa-flash-container">
+          {% for category, message in messages %}
+            <div class="pa-flash pa-flash-{{ category }}">
+              {{ message }}
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
 
     <form method="get" class="pa-filters">
         <div class="pa-filters-row">
@@ -22,7 +44,7 @@
             <label>
                 Модель (фрагмент)
                 <input type="text" name="model"
-                       value="{{ current_model or '' }}"
+                       value="{{ current_model }}"
                        placeholder="Например: Нива, МТЗ-82, 5551">
             </label>
         </div>
@@ -42,10 +64,27 @@
             </label>
 
             <label>
-                Поиск по модели / описанию
+                Страна сайта
+                <select name="country">
+                    <option value="">Все</option>
+                    {% for c in countries %}
+                        {% if c %}
+                            <option value="{{ c }}"
+                                    {% if c == current_country %}selected{% endif %}>
+                                {{ c }}
+                            </option>
+                        {% endif %}
+                    {% endfor %}
+                </select>
+            </label>
+        </div>
+
+        <div class="pa-filters-row">
+            <label style="flex: 1 1 100%;">
+                Поиск по модели / описанию / ссылке / номерам
                 <input type="text" name="query"
-                       value="{{ current_query or '' }}"
-                       placeholder="Любое слово из описания">
+                       value="{{ current_query }}"
+                       placeholder="Например: niva 21213 мост или 01.2022">
             </label>
         </div>
 
@@ -56,6 +95,14 @@
             <a href="{{ url_for('index') }}" class="pa-button-secondary">
                 Сбросить
             </a>
+        </div>
+
+        <div class="pa-hints">
+            <strong>Примеры запросов:</strong>
+            <span>«niva 21213»</span>
+            <span>«СК-5 Нива»</span>
+            <span>«mtz 82 каталог pdf»</span>
+            <span>«01.2022»</span>
         </div>
     </form>
 </div>
@@ -75,22 +122,29 @@
                 <tr>
                     <th>Группа техники</th>
                     <th>Модели</th>
-                    <th>Тип каталога</th>
+                    <th>Тип</th>
                     <th>Описание</th>
+                    <th>Источник</th>
                     <th>Ссылка</th>
                 </tr>
                 </thead>
                 <tbody>
                 {% for row in records %}
                     <tr>
-                        <td>{{ row["Группа техники"] }}</td>
-                        <td>{{ row["Модели"] }}</td>
-                        <td>{{ row["Тип каталога"] }}</td>
+                        <td>{{ row.group_name }}</td>
+                        <td>{{ row.models | highlight(current_query) }}</td>
+                        <td>{{ row.catalog_type }}</td>
                         <td class="pa-col-description">
-                            {{ row["Описание"] }}
+                            {{ row.description | highlight(current_query) }}
                         </td>
                         <td>
-                            <a href="{{ row["Ссылка"] }}"
+                            {{ row.domain }}
+                            {% if row.source_country %}
+                                <span class="pa-badge-country">{{ row.source_country }}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{{ row.url }}"
                                target="_blank"
                                rel="noopener"
                                class="pa-link-button">
