@@ -149,6 +149,36 @@ class AccessLog(Base):
     city: Mapped[str] = mapped_column(String(128), index=True, default="")
 
 
+class PartStock(Base):
+    """
+    Таблица склада запчастей.
+    На этом этапе — только базовые поля и просмотр.
+    """
+
+    __tablename__ = "parts_stock"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+
+    part_number: Mapped[str] = mapped_column(String(100), index=True)   # номер детали / артикул
+    name: Mapped[str] = mapped_column(String(255))                      # наименование
+
+    group_name: Mapped[str] = mapped_column(String(255), index=True, default="")  # группа техники
+    models: Mapped[str] = mapped_column(String(255), default="")                  # к каким моделям относится
+
+    quantity: Mapped[int] = mapped_column(Integer, default=0)          # остаток
+    min_quantity: Mapped[int] = mapped_column(Integer, default=0)      # минимальный остаток
+
+    location: Mapped[str] = mapped_column(String(255), default="")     # место хранения
+    status: Mapped[str] = mapped_column(String(50), index=True, default="в наличии")
+
+    engineer_note: Mapped[str] = mapped_column(String(1000), default="")
+
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
+    )
+
+
 # --- Движок БД ---
 
 engine = create_engine(f"sqlite:///{DB_FILE}", echo=False, future=True)
@@ -706,4 +736,66 @@ def get_access_log_stats(limit: int = 20) -> dict:
         "top_agents": top_agents,
         "top_countries": top_countries,
         "top_cities": top_cities,
+    }
+
+
+# --- СКЛАД: поиск и фильтры по PartStock ---
+
+def search_stock(
+    part_number: str | None = None,
+    name: str | None = None,
+    group: str | None = None,
+    status: str | None = None,
+) -> list[PartStock]:
+    """
+    Поиск по складу запчастей.
+    Все фильтры опциональны.
+    """
+    with Session(engine) as session:
+        stmt = select(PartStock)
+        conditions = []
+
+        if part_number:
+            p = f"%{part_number.strip()}%"
+            conditions.append(PartStock.part_number.ilike(p))
+
+        if name:
+            p = f"%{name.strip()}%"
+            conditions.append(PartStock.name.ilike(p))
+
+        if group:
+            conditions.append(PartStock.group_name == group)
+
+        if status:
+            conditions.append(PartStock.status == status)
+
+        if conditions:
+            stmt = stmt.where(and_(*conditions))
+
+        stmt = stmt.order_by(PartStock.group_name, PartStock.part_number)
+
+        return list(session.scalars(stmt).all())
+
+
+def get_stock_filter_options() -> dict:
+    """
+    Наборы значений для фильтров склада (группа, статус).
+    """
+    with Session(engine) as session:
+        groups = [
+            g[0]
+            for g in session.query(PartStock.group_name)
+            .distinct()
+            .order_by(PartStock.group_name)
+        ]
+        statuses = [
+            s[0]
+            for s in session.query(PartStock.status)
+            .distinct()
+            .order_by(PartStock.status)
+        ]
+
+    return {
+        "groups": groups,
+        "statuses": statuses,
     }

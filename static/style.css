@@ -677,6 +677,69 @@ body {
 }
 
 /* =========================
+   ТАБЫ НА СКЛАДЕ
+   ========================= */
+
+.pa-tabs {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin-bottom: 0.6rem;
+    border-radius: 999px;
+    padding: 0.1rem;
+    background: #f3f4f6;
+}
+
+.pa-tab {
+    padding: 0.25rem 0.8rem;
+    border-radius: 999px;
+    font-size: 0.82rem;
+    cursor: default;
+    user-select: none;
+    color: #4b5563;
+}
+
+.pa-tab-active {
+    background: #ffffff;
+    color: #111827;
+    font-weight: 600;
+    box-shadow: 0 3px 8px rgba(15, 23, 42, 0.08);
+}
+
+.pa-tab-disabled {
+    opacity: 0.6;
+}
+
+/* =========================
+   ГРУППОВЫЕ ЗАГОЛОВКИ НА СКЛАДЕ
+   ========================= */
+
+.pa-stock-group-row td {
+    background: #f3f4f6;
+    border-bottom: 1px solid #e5e7eb;
+    padding-top: 0.5rem;
+    padding-bottom: 0.35rem;
+}
+
+.pa-stock-group-title {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: #111827;
+}
+
+.pa-stock-group-title::before {
+    content: "";
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+    background: #f97316;
+}
+
+/* =========================
    АДАПТИВНОСТЬ
    ========================= */
 
@@ -809,6 +872,23 @@ body {
 
     .pa-row-actions {
         justify-content: flex-start;
+    }
+
+    /* Групповые строки на мобильном */
+
+    .pa-table-catalog tr.pa-stock-group-row {
+        display: block;
+        padding: 0.3rem 0.4rem;
+        background: #e5e7eb;
+        box-shadow: none;
+        transform: none;
+        border-radius: 0.6rem;
+        margin-bottom: 0.25rem;
+    }
+
+    .pa-table-catalog tr.pa-stock-group-row td {
+        padding: 0;
+        border-bottom: none;
     }
 }
 

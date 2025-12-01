@@ -1,0 +1,173 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="pa-card">
+    <div class="pa-tabs">
+        <span class="pa-tab pa-tab-active">В наличии</span>
+        <span class="pa-tab pa-tab-disabled" title="Функция в разработке">
+            На закупку
+        </span>
+    </div>
+
+    <div class="pa-results-header">
+        <div>
+            <h2>Склад запчастей</h2>
+            <div class="pa-results-subtitle">
+                Просмотр имеющихся в наличии деталей по номеру, названию и группе техники
+            </div>
+        </div>
+    </div>
+
+    <form method="get" action="{{ url_for('warehouse') }}">
+        <div class="pa-filters-grid">
+            <div>
+                <label class="pa-field-label">Номер детали / артикул</label>
+                <input type="text" name="part" class="pa-input"
+                       placeholder="например: 80-4607010, 238Н-1701050"
+                       value="{{ current_part }}">
+            </div>
+            <div>
+                <label class="pa-field-label">Наименование</label>
+                <input type="text" name="name" class="pa-input"
+                       placeholder="например: подшипник, фильтр, ремень"
+                       value="{{ current_name }}">
+            </div>
+            <div>
+                <label class="pa-field-label">Группа техники</label>
+                <select name="group" class="pa-select">
+                    <option value="">Все группы</option>
+                    {% for g in stock_groups %}
+                        <option value="{{ g }}" {% if current_group == g %}selected{% endif %}>{{ g }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label class="pa-field-label">Статус</label>
+                <select name="status" class="pa-select">
+                    <option value="">Все</option>
+                    {% for s in stock_statuses %}
+                        <option value="{{ s }}" {% if current_status == s %}selected{% endif %}>{{ s }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <div class="pa-filters-row">
+            <div class="pa-filters-actions">
+                <button type="submit" class="pa-button-primary">
+                    Показать
+                </button>
+                <a href="{{ url_for('warehouse') }}" class="pa-button-secondary">
+                    Сбросить
+                </a>
+            </div>
+        </div>
+    </form>
+</div>
+
+<div class="pa-card">
+    <div class="pa-results-header">
+        <h2>Остатки на складе</h2>
+        <div class="pa-results-info">
+            {% set count = records|length %}
+            {% if count > 0 %}
+                <span class="pa-results-count">Позиций: {{ count }}</span>
+            {% else %}
+                <span class="pa-results-count pa-results-count-empty">
+                    На складе пока нет записей
+                </span>
+            {% endif %}
+        </div>
+    </div>
+
+    <p class="pa-empty-hint">
+        Если нужной запчасти нет в списке, перейдите во вкладку
+        «Каталоги» и оформите запрос на закупку по подходящему каталогу.
+    </p>
+
+    {% if not records %}
+        <p class="pa-empty-hint">
+            Для старта вы можете позже импортировать склад из Excel или добавить позиции вручную.
+        </p>
+    {% else %}
+        <div class="pa-table-wrapper">
+            <table class="pa-table pa-table-compact pa-table-catalog">
+                <thead>
+                <tr>
+                    <th>Номер детали</th>
+                    <th>Наименование</th>
+                    <th>Группа / модели</th>
+                    <th>Остаток</th>
+                    <th>Место</th>
+                    <th>Статус</th>
+                    <th>Заметка</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% set ns = namespace(current_group=None) %}
+                {% for p in records %}
+                    {% if p.group_name != ns.current_group %}
+                        {% set ns.current_group = p.group_name %}
+                        <tr class="pa-stock-group-row">
+                            <td colspan="7">
+                                <span class="pa-stock-group-title">
+                                    {{ ns.current_group or "Без группы" }}
+                                </span>
+                            </td>
+                        </tr>
+                    {% endif %}
+                    <tr>
+                        <td class="pa-col-group">
+                            <span class="pa-td-label">Номер детали</span>
+                            {{ p.part_number }}
+                        </td>
+                        <td class="pa-col-model">
+                            <span class="pa-td-label">Наименование</span>
+                            {{ p.name }}
+                        </td>
+                        <td class="pa-col-desc">
+                            <span class="pa-td-label">Группа / модели</span>
+                            {% if p.group_name %}
+                                <div><strong>{{ p.group_name }}</strong></div>
+                            {% endif %}
+                            {% if p.models %}
+                                <div class="pa-domain-text">{{ p.models }}</div>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="pa-td-label">Остаток</span>
+                            {{ p.quantity }}
+                            {% if p.min_quantity and p.quantity is not none %}
+                                {% if p.quantity <= p.min_quantity %}
+                                    <span class="pa-results-pill">
+                                        Ниже минимума ({{ p.min_quantity }})
+                                    </span>
+                                {% endif %}
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="pa-td-label">Место</span>
+                            {{ p.location or "—" }}
+                        </td>
+                        <td>
+                            <span class="pa-td-label">Статус</span>
+                            {{ p.status or "—" }}
+                        </td>
+                        <td>
+                            <span class="pa-td-label">Заметка</span>
+                            {% if p.engineer_note %}
+                                <div class="pa-note-inline">
+                                    {{ p.engineer_note }}
+                                </div>
+                            {% else %}
+                                <span class="pa-meta-empty">нет</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

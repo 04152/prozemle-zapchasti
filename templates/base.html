@@ -31,6 +31,11 @@
                class="pa-nav-link {% if request.endpoint == 'index' %}pa-nav-link-active{% endif %}">
                 Каталоги
             </a>
+            <a href="{{ url_for('warehouse') }}"
+               class="pa-nav-link {% if request.endpoint == 'warehouse' %}pa-nav-link-active{% endif %}">
+                Склад
+    </a>
+            </a>
             <a href="{{ url_for('stats') }}"
                class="pa-nav-link {% if request.endpoint == 'stats' %}pa-nav-link-active{% endif %}">
                 Статистика

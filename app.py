@@ -10,20 +10,23 @@ from db import (
     import_from_excel,
     search_catalogs,
     get_filter_options,
+    log_search,
+    get_recent_searches,
+    get_saved_queries,
+    create_saved_query,
+    get_saved_query_by_id,
+    get_usage_stats,
     get_catalog_by_id,
     toggle_favorite_flag,
     update_engineer_note,
-    log_search,
-    get_recent_searches,
-    create_saved_query,
-    get_saved_queries,
-    get_saved_query_by_id,
     record_click,
-    get_usage_stats,
     add_access_log,
     get_last_access_logs,
     get_access_log_stats,
+    search_stock,
+    get_stock_filter_options,
 )
+
 
 app = Flask(__name__)
 # Нужен для flash и сессий
@@ -382,6 +385,36 @@ def admin_logout():
     session.pop("is_admin", None)
     flash("Админ-доступ отключён.", "success")
     return redirect(url_for("index"))
+
+@app.route("/sklad")
+def warehouse():
+    """
+    Страница склада (пока только просмотр остатков, без редактирования).
+    """
+    part = (request.args.get("part") or "").strip()
+    name = (request.args.get("name") or "").strip()
+    group = (request.args.get("group") or "").strip()
+    status = (request.args.get("status") or "").strip()
+
+    options = get_stock_filter_options()
+    records = search_stock(
+        part_number=part or None,
+        name=name or None,
+        group=group or None,
+        status=status or None,
+    )
+
+    return render_template(
+        "sklad.html",
+        records=records,
+        stock_groups=options["groups"],
+        stock_statuses=options["statuses"],
+        current_part=part,
+        current_name=name,
+        current_group=group,
+        current_status=status,
+    )
+
 
 
 if __name__ == "__main__":
