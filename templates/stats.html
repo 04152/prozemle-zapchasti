@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="pa-card">
+    <h2>Статистика использования каталога</h2>
+
+    <div class="pa-stats-grid">
+        <div class="pa-stat-card">
+            <div class="pa-stat-label">Всего поисков</div>
+            <div class="pa-stat-value">{{ stats.total_searches }}</div>
+        </div>
+        <div class="pa-stat-card">
+            <div class="pa-stat-label">Сохранённых шаблонов</div>
+            <div class="pa-stat-value">{{ stats.total_saved_queries }}</div>
+        </div>
+        <div class="pa-stat-card">
+            <div class="pa-stat-label">Кликов по каталогам</div>
+            <div class="pa-stat-value">{{ stats.total_clicks }}</div>
+        </div>
+    </div>
+</div>
+
+<div class="pa-card pa-card-two-columns">
+    <div class="pa-card-column">
+        <h3>ТОП групп техники по поискам</h3>
+        {% if stats.group_searches %}
+            <table class="pa-table pa-table-compact">
+                <thead>
+                <tr>
+                    <th>Группа</th>
+                    <th>Поисков</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for item in stats.group_searches %}
+                    <tr>
+                        <td>{{ item.name }}</td>
+                        <td>{{ item.count }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>Пока нет данных по группам.</p>
+        {% endif %}
+    </div>
+
+    <div class="pa-card-column">
+        <h3>ТОП “моделей” по поискам</h3>
+        {% if stats.model_searches %}
+            <table class="pa-table pa-table-compact">
+                <thead>
+                <tr>
+                    <th>Модель / фрагмент</th>
+                    <th>Поисков</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for item in stats.model_searches %}
+                    <tr>
+                        <td>{{ item.name }}</td>
+                        <td>{{ item.count }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>Пока нет данных по моделям.</p>
+        {% endif %}
+    </div>
+</div>
+
+<div class="pa-card pa-card-two-columns">
+    <div class="pa-card-column">
+        <h3>ТОП каталогов по кликам</h3>
+        {% if stats.top_catalog_clicks %}
+            <table class="pa-table pa-table-compact">
+                <thead>
+                <tr>
+                    <th>Группа</th>
+                    <th>Модели</th>
+                    <th>Тип</th>
+                    <th>Домен</th>
+                    <th>Кликов</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for item in stats.top_catalog_clicks %}
+                    <tr>
+                        <td>{{ item.catalog.group_name }}</td>
+                        <td>{{ item.catalog.models }}</td>
+                        <td>{{ item.catalog.catalog_type }}</td>
+                        <td>{{ item.catalog.domain }}</td>
+                        <td>{{ item.count }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>Кликов по каталогам пока не зафиксировано.</p>
+        {% endif %}
+    </div>
+
+    <div class="pa-card-column">
+        <h3>ТОП доменов по кликам</h3>
+        {% if stats.domain_clicks %}
+            <table class="pa-table pa-table-compact">
+                <thead>
+                <tr>
+                    <th>Домен</th>
+                    <th>Кликов</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for item in stats.domain_clicks %}
+                    <tr>
+                        <td>{{ item.domain }}</td>
+                        <td>{{ item.count }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>Пока нет статистики по доменам.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

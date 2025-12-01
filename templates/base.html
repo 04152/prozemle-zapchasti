@@ -4,26 +4,37 @@
     <meta charset="utf-8">
     <title>Каталоги запчастей — Проземле-Агро</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet"
-          href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
 <header class="pa-header">
-    <div class="pa-header-logo">
-        <img src="{{ url_for('static', filename='99664.gif') }}"
-             alt="Логотип Проземле-Агро"
-             class="pa-logo">
+    <div class="pa-header-main">
+        <div class="pa-logo-block">
+            <img src="{{ url_for('static', filename='99664.gif') }}"
+                 alt="Логотип Проземле-Агро"
+                 class="pa-logo">
+            <div class="pa-org-info">
+                <div class="pa-org-name">ОАО «Проземле-Агро»</div>
+                <div class="pa-org-desc">
+                    Смешанное сельское хозяйство: мясо-молочное направление, КРС, растениеводство, зерновые, зернобобовые.
+                </div>
+                <div class="pa-org-director">
+                    Директор: Кулаков Виктор Иванович
+                </div>
+            </div>
+        </div>
     </div>
-    <div class="pa-header-info">
-        <h1>Проземле-Агро ОАО</h1>
-        <p class="pa-header-subtitle">
-            Смешанное сельское хозяйство. Мясо-молочное направление, КРС,
-            растениеводство, зерновые, зернобобовые.
-        </p>
-        <p class="pa-header-director">
-            Директор: Кулаков Виктор Иванович
-        </p>
-    </div>
+
+    <nav class="pa-nav">
+        <a href="{{ url_for('index') }}"
+           class="pa-nav-link {% if request.endpoint == 'index' %}pa-nav-active{% endif %}">
+            Каталоги
+        </a>
+        <a href="{{ url_for('stats') }}"
+           class="pa-nav-link {% if request.endpoint == 'stats' %}pa-nav-active{% endif %}">
+            Статистика
+        </a>
+    </nav>
 </header>
 
 <main class="pa-main">
@@ -31,7 +42,8 @@
 </main>
 
 <footer class="pa-footer">
-    <p>Сервис подбора каталогов запчастей для внутреннего использования Проземле-Агро ОАО.</p>
+    <span>Сервис подбора каталогов запчастей для техники ОАО «Проземле-Агро».</span>
+    <span>Версия 2.4 (каталоги + избранное + примечания + статистика).</span>
 </footer>
 </body>
 </html>

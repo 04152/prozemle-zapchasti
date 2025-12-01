@@ -317,3 +317,325 @@ mark {
         font-size: 13px;
     }
 }
+/* Форма обновления базы с паролем */
+.pa-refresh-form {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.pa-input-token {
+    width: 110px;
+    padding: 4px 6px;
+    font-size: 13px;
+    border: 1px solid #cfd2dc;
+    border-radius: 6px;
+    outline: none;
+}
+
+.pa-input-token:focus {
+    border-color: #1b5e20;
+    box-shadow: 0 0 0 1px rgba(27, 94, 32, 0.12);
+}
+
+/* Статусы каталога */
+
+.pa-status {
+    display: inline-block;
+    padding: 1px 6px;
+    border-radius: 999px;
+    font-size: 11px;
+    border: 1px solid transparent;
+    white-space: nowrap;
+}
+
+.pa-status-актуальный {
+    background: #e8f5e9;
+    color: #1b5e20;
+    border-color: #a5d6a7;
+}
+
+.pa-status-устаревший {
+    background: #ffebee;
+    color: #c62828;
+    border-color: #ef9a9a;
+}
+
+.pa-status-проверить {
+    background: #fff8e1;
+    color: #ef6c00;
+    border-color: #ffcc80;
+}
+
+.pa-status-unknown {
+    background: #eceff1;
+    color: #546e7a;
+}
+
+/* Тип источника */
+
+.pa-badge-source {
+    display: inline-block;
+    margin-left: 4px;
+    padding: 0 6px;
+    border-radius: 999px;
+    font-size: 11px;
+    background: #f3e5f5;
+    color: #4a148c;
+}
+
+/* Избранное и примечания */
+
+.pa-star {
+    margin-left: 4px;
+    color: #ffc107;
+    font-size: 14px;
+}
+
+.pa-note-icon {
+    margin-left: 4px;
+    font-size: 13px;
+    opacity: 0.8;
+}
+/* Чекбокс "Только избранные" */
+
+.pa-checkbox-inline {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 13px;
+}
+
+/* Формы избранного и звёздочка */
+
+.pa-fav-form {
+    display: inline-block;
+    margin-left: 4px;
+}
+
+.pa-star-button {
+    border: none;
+    background: transparent;
+    padding: 0;
+    cursor: pointer;
+    font-size: 16px;
+    line-height: 1;
+}
+
+.pa-star-button:hover {
+    transform: scale(1.1);
+}
+
+/* Ссылка-иконка примечания */
+
+.pa-note-link {
+    margin-left: 6px;
+    text-decoration: none;
+    font-size: 14px;
+}
+
+/* Форма примечания */
+
+.pa-note-form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 8px;
+}
+
+.pa-note-textarea {
+    width: 100%;
+    min-height: 120px;
+    padding: 8px;
+    font-size: 14px;
+    border-radius: 6px;
+    border: 1px solid #cfd2dc;
+    resize: vertical;
+}
+
+.pa-note-textarea:focus {
+    border-color: #1b5e20;
+    box-shadow: 0 0 0 1px rgba(27, 94, 32, 0.12);
+    outline: none;
+}
+
+.pa-note-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 4px;
+    flex-wrap: wrap;
+}
+/* Блоки истории и шаблонов */
+
+.pa-aux-blocks {
+    margin-top: 12px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.pa-aux-block {
+    flex: 1 1 260px;
+    background: #f7f8fc;
+    border-radius: 8px;
+    padding: 8px 10px;
+    font-size: 12px;
+}
+
+.pa-aux-block h4 {
+    margin: 0 0 6px;
+    font-size: 13px;
+}
+
+.pa-aux-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.pa-aux-list li {
+    margin-bottom: 4px;
+}
+
+.pa-aux-list a {
+    text-decoration: none;
+    font-size: 12px;
+    color: #1b5e20;
+}
+
+.pa-aux-list a:hover {
+    text-decoration: underline;
+}
+
+.pa-aux-tag {
+    display: inline-block;
+    margin-left: 3px;
+    margin-top: 2px;
+    padding: 0 5px;
+    border-radius: 999px;
+    background: #e0e3ec;
+    font-size: 10px;
+    color: #333;
+}
+
+.pa-aux-empty {
+    margin: 4px 0 0;
+    font-size: 12px;
+    color: #777;
+}
+
+/* Форма сохранения шаблонов */
+
+.pa-save-query-form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+    margin-bottom: 6px;
+}
+
+.pa-save-query-form input[type="text"] {
+    flex: 1 1 140px;
+    padding: 4px 6px;
+    font-size: 12px;
+    border-radius: 6px;
+    border: 1px solid #cfd2dc;
+}
+
+.pa-button-small {
+    padding: 4px 10px;
+    font-size: 12px;
+}
+
+@media (max-width: 768px) {
+    .pa-aux-blocks {
+        flex-direction: column;
+    }
+}
+/* Навигация */
+
+.pa-nav {
+    display: flex;
+    gap: 8px;
+    padding: 4px 16px 10px;
+    border-top: 1px solid #e0e3ec;
+    border-bottom: 1px solid #e0e3ec;
+    background: #f5f6fb;
+}
+
+.pa-nav-link {
+    font-size: 14px;
+    text-decoration: none;
+    padding: 4px 10px;
+    border-radius: 999px;
+    color: #37474f;
+}
+
+.pa-nav-link:hover {
+    background: #e0e3ec;
+}
+
+.pa-nav-active {
+    background: #1b5e20;
+    color: #fff;
+}
+
+/* Статистика */
+
+.pa-stats-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 8px;
+}
+
+.pa-stat-card {
+    flex: 1 1 160px;
+    border-radius: 10px;
+    background: #f7f8fc;
+    padding: 8px 10px;
+}
+
+.pa-stat-label {
+    font-size: 12px;
+    color: #555;
+    margin-bottom: 4px;
+}
+
+.pa-stat-value {
+    font-size: 20px;
+    font-weight: 600;
+    color: #1b5e20;
+}
+
+.pa-card-two-columns {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.pa-card-column {
+    flex: 1 1 260px;
+}
+
+/* Компактные таблицы для статистики */
+
+.pa-table-compact {
+    font-size: 12px;
+}
+
+.pa-table-compact th,
+.pa-table-compact td {
+    padding: 4px 6px;
+}
+
+@media (max-width: 768px) {
+    .pa-card-two-columns {
+        flex-direction: column;
+    }
+
+    .pa-nav {
+        flex-wrap: wrap;
+    }
+}
+

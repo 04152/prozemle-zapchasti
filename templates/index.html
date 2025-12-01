@@ -5,8 +5,12 @@
     <div class="pa-filters-header">
         <h2>Каталоги запчастей техники</h2>
 
-        <!-- Кнопка обновления базы -->
-        <form method="post" action="{{ url_for('refresh') }}">
+        <!-- Кнопка обновления базы с паролем -->
+        <form method="post" action="{{ url_for('refresh') }}" class="pa-refresh-form">
+            <input type="password"
+                   name="token"
+                   class="pa-input-token"
+                   placeholder="Пароль">
             <button type="submit" class="pa-button-secondary">
                 Обновить базу из Excel
             </button>
@@ -88,6 +92,14 @@
             </label>
         </div>
 
+        <div class="pa-filters-row">
+            <label class="pa-checkbox-inline">
+                <input type="checkbox" name="favorites_only" value="1"
+                       {% if favorites_only %}checked{% endif %}>
+                Только избранные
+            </label>
+        </div>
+
         <div class="pa-filters-actions">
             <button type="submit" class="pa-button-primary">
                 Найти
@@ -105,6 +117,95 @@
             <span>«01.2022»</span>
         </div>
     </form>
+
+    <div class="pa-aux-blocks">
+        <div class="pa-aux-block">
+            <h4>Последние запросы</h4>
+            {% if recent_searches %}
+                <ul class="pa-aux-list">
+                    {% for s in recent_searches %}
+                        <li>
+                            <a href="{{ url_for('index',
+                                                group=s.group_name,
+                                                model=s.model_fragment,
+                                                catalog_type=s.catalog_type,
+                                                country=s.country,
+                                                query=s.query) }}">
+                                {% if s.query %}
+                                    «{{ s.query }}»
+                                {% else %}
+                                    без текстового поиска
+                                {% endif %}
+                                {% if s.group_name %}
+                                    <span class="pa-aux-tag">{{ s.group_name }}</span>
+                                {% endif %}
+                                {% if s.model_fragment %}
+                                    <span class="pa-aux-tag">{{ s.model_fragment }}</span>
+                                {% endif %}
+                                {% if s.catalog_type %}
+                                    <span class="pa-aux-tag">{{ s.catalog_type }}</span>
+                                {% endif %}
+                                {% if s.country %}
+                                    <span class="pa-aux-tag">{{ s.country }}</span>
+                                {% endif %}
+                            </a>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p class="pa-aux-empty">Пока нет истории запросов.</p>
+            {% endif %}
+        </div>
+
+        <div class="pa-aux-block">
+            <h4>Сохранённые шаблоны</h4>
+
+            <form method="post"
+                  action="{{ url_for('save_query') }}"
+                  class="pa-save-query-form">
+                <input type="hidden" name="group" value="{{ current_group }}">
+                <input type="hidden" name="model" value="{{ current_model }}">
+                <input type="hidden" name="catalog_type" value="{{ current_type }}">
+                <input type="hidden" name="query" value="{{ current_query }}">
+                <input type="hidden" name="country" value="{{ current_country }}">
+                <input type="hidden" name="favorites_only" value="{{ '1' if favorites_only else '' }}">
+
+                <input type="text" name="title" placeholder="Название шаблона">
+                <button type="submit" class="pa-button-secondary pa-button-small">
+                    Сохранить текущий запрос
+                </button>
+            </form>
+
+            {% if saved_queries %}
+                <ul class="pa-aux-list">
+                    {% for q in saved_queries %}
+                        <li>
+                            <a href="{{ url_for('use_query', query_id=q.id) }}">
+                                {{ q.title }}
+                                {% if q.group_name %}
+                                    <span class="pa-aux-tag">{{ q.group_name }}</span>
+                                {% endif %}
+                                {% if q.model_fragment %}
+                                    <span class="pa-aux-tag">{{ q.model_fragment }}</span>
+                                {% endif %}
+                                {% if q.catalog_type %}
+                                    <span class="pa-aux-tag">{{ q.catalog_type }}</span>
+                                {% endif %}
+                                {% if q.country %}
+                                    <span class="pa-aux-tag">{{ q.country }}</span>
+                                {% endif %}
+                                {% if q.query %}
+                                    <span class="pa-aux-tag">«{{ q.query }}»</span>
+                                {% endif %}
+                            </a>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p class="pa-aux-empty">Шаблонов ещё нет.</p>
+            {% endif %}
+        </div>
+    </div>
 </div>
 
 <div class="pa-card">
@@ -123,6 +224,7 @@
                     <th>Группа техники</th>
                     <th>Модели</th>
                     <th>Тип</th>
+                    <th>Статус</th>
                     <th>Описание</th>
                     <th>Источник</th>
                     <th>Ссылка</th>
@@ -134,17 +236,61 @@
                         <td>{{ row.group_name }}</td>
                         <td>{{ row.models | highlight(current_query) }}</td>
                         <td>{{ row.catalog_type }}</td>
+                        <td>
+                            {% if row.status %}
+                                <span class="pa-status pa-status-{{ row.status|lower|replace(' ', '-') }}">
+                                    {{ row.status }}
+                                </span>
+                            {% else %}
+                                <span class="pa-status pa-status-unknown">—</span>
+                            {% endif %}
+                        </td>
                         <td class="pa-col-description">
                             {{ row.description | highlight(current_query) }}
+                            <a href="{{ url_for('edit_note',
+                                                catalog_id=row.id,
+                                                group=current_group,
+                                                model=current_model,
+                                                catalog_type=current_type,
+                                                query=current_query,
+                                                country=current_country,
+                                                favorites_only='1' if favorites_only else '') }}"
+                               class="pa-note-link"
+                               title="{% if row.engineer_note %}{{ row.engineer_note }}{% else %}Добавить примечание{% endif %}">
+                                📝
+                            </a>
                         </td>
                         <td>
                             {{ row.domain }}
                             {% if row.source_country %}
                                 <span class="pa-badge-country">{{ row.source_country }}</span>
                             {% endif %}
+                            {% if row.source_type %}
+                                <span class="pa-badge-source">{{ row.source_type }}</span>
+                            {% endif %}
+
+                            <form method="post"
+                                  action="{{ url_for('toggle_favorite', catalog_id=row.id) }}"
+                                  class="pa-fav-form">
+                                <input type="hidden" name="group" value="{{ current_group }}">
+                                <input type="hidden" name="model" value="{{ current_model }}">
+                                <input type="hidden" name="catalog_type" value="{{ current_type }}">
+                                <input type="hidden" name="query" value="{{ current_query }}">
+                                <input type="hidden" name="country" value="{{ current_country }}">
+                                <input type="hidden" name="favorites_only" value="{{ '1' if favorites_only else '' }}">
+                                <button type="submit"
+                                        class="pa-star-button"
+                                        title="Переключить избранное">
+                                    {% if row.favorite %}
+                                        ★
+                                    {% else %}
+                                        ☆
+                                    {% endif %}
+                                </button>
+                            </form>
                         </td>
                         <td>
-                            <a href="{{ row.url }}"
+                            <a href="{{ url_for('open_catalog', catalog_id=row.id) }}"
                                target="_blank"
                                rel="noopener"
                                class="pa-link-button">

@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="pa-card">
+    <h2>Примечание к каталогу</h2>
+
+    <p><strong>Группа техники:</strong> {{ record.group_name }}</p>
+    <p><strong>Модели:</strong> {{ record.models }}</p>
+    <p><strong>Тип каталога:</strong> {{ record.catalog_type }}</p>
+    <p>
+        <strong>Ссылка:</strong>
+        <a href="{{ record.url }}" target="_blank" rel="noopener">
+            {{ record.url }}
+        </a>
+    </p>
+
+    <form method="post" class="pa-note-form">
+        <label>
+            Примечание инженера:
+            <textarea name="engineer_note"
+                      rows="5"
+                      class="pa-note-textarea"
+                      placeholder="Например: этот каталог самый полный, использовать в первую очередь.">{{ record.engineer_note }}</textarea>
+        </label>
+
+        <!-- Сохраняем фильтры, чтобы вернуться туда же -->
+        <input type="hidden" name="group" value="{{ current_group }}">
+        <input type="hidden" name="model" value="{{ current_model }}">
+        <input type="hidden" name="catalog_type" value="{{ current_type }}">
+        <input type="hidden" name="query" value="{{ current_query }}">
+        <input type="hidden" name="country" value="{{ current_country }}">
+        <input type="hidden" name="favorites_only" value="{{ '1' if favorites_only else '' }}">
+
+        <div class="pa-note-actions">
+            <button type="submit" class="pa-button-primary">
+                Сохранить
+            </button>
+            <a href="{{ url_for('index',
+                                 group=current_group,
+                                 model=current_model,
+                                 catalog_type=current_type,
+                                 query=current_query,
+                                 country=current_country,
+                                 favorites_only='1' if favorites_only else '') }}"
+               class="pa-button-secondary">
+                Отмена
+            </a>
+        </div>
+    </form>
+</div>
+{% endblock %}
