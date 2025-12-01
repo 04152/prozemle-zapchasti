@@ -5,4 +5,5 @@ requests==2.32.3
 gunicorn==22.0.0
 SQLAlchemy==2.0.32
 markupsafe==3.0.3
-MarkupSafe~=3.0.3
+MarkupSafe==3.0.3
+geoip2==5.2.0

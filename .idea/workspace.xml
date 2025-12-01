@@ -4,15 +4,18 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="14a4daf0-e3fa-4190-b6c9-32ebe0de75d3" name="Changes" comment="Initial commit_v 2.0">
-      <change afterPath="$PROJECT_DIR$/templates/note.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/templates/stats.html" afterDir="false" />
+    <list default="true" id="14a4daf0-e3fa-4190-b6c9-32ebe0de75d3" name="Changes" comment="Initial commit_v 2.4">
+      <change afterPath="$PROJECT_DIR$/templates/admin_login.html" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/templates/admin_logs.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app.py" beforeDir="false" afterPath="$PROJECT_DIR$/app.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/catalogs.db" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/db.py" beforeDir="false" afterPath="$PROJECT_DIR$/db.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/requirements.txt" beforeDir="false" afterPath="$PROJECT_DIR$/requirements.txt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/static/style.css" beforeDir="false" afterPath="$PROJECT_DIR$/static/style.css" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/templates/base.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/base.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/index.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Запчасти.zip" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Каталоги_запчастей_ПроземлеАгро.xlsx" beforeDir="false" afterPath="$PROJECT_DIR$/Каталоги_запчастей_ПроземлеАгро.xlsx" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -45,7 +48,9 @@
   &quot;associatedIndex&quot;: 2
 }</component>
   <component name="ProjectId" id="36CSpt0gzU1tZ2jTPrSXWTgaRFb" />
-  <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true">
+    <ConfirmationsSetting value="2" id="Add" />
+  </component>
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
@@ -171,7 +176,8 @@
       <workItem from="1764562016481" duration="1375000" />
       <workItem from="1764567823119" duration="2344000" />
       <workItem from="1764575500317" duration="905000" />
-      <workItem from="1764578365561" duration="3143000" />
+      <workItem from="1764578365561" duration="3809000" />
+      <workItem from="1764583786425" duration="6256000" />
     </task>
     <task id="LOCAL-00001" summary="Initial commit">
       <option name="closed" value="true" />
@@ -205,7 +211,23 @@
       <option name="project" value="LOCAL" />
       <updated>1764577644207</updated>
     </task>
-    <option name="localTasksCounter" value="5" />
+    <task id="LOCAL-00005" summary="Initial commit_v 2.4">
+      <option name="closed" value="true" />
+      <created>1764581538381</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1764581538381</updated>
+    </task>
+    <task id="LOCAL-00006" summary="Initial commit_v 2.4">
+      <option name="closed" value="true" />
+      <created>1764581570019</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1764581570019</updated>
+    </task>
+    <option name="localTasksCounter" value="7" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -215,10 +237,11 @@
     <MESSAGE value="Initial commit" />
     <MESSAGE value="Initial commit_v1" />
     <MESSAGE value="Initial commit_v 2.0" />
-    <option name="LAST_COMMIT_MESSAGE" value="Initial commit_v 2.0" />
+    <MESSAGE value="Initial commit_v 2.4" />
+    <option name="LAST_COMMIT_MESSAGE" value="Initial commit_v 2.4" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/$validate_links.coverage" NAME="validate_links Coverage Results" MODIFIED="1764567879382" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
-    <SUITE FILE_PATH="coverage/$app.coverage" NAME="app Coverage Results" MODIFIED="1764581453957" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/$app.coverage" NAME="app Coverage Results" MODIFIED="1764594018983" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>
 </project>

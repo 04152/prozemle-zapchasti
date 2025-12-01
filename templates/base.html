@@ -2,48 +2,72 @@
 <html lang="ru">
 <head>
     <meta charset="utf-8">
-    <title>Каталоги запчастей — Проземле-Агро</title>
+    <title>{% block title %}Каталоги запчастей Проземле-Агро{% endblock %}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
+
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-<header class="pa-header">
-    <div class="pa-header-main">
-        <div class="pa-logo-block">
+<div class="pa-layout">
+    <header class="pa-header">
+        <div class="pa-header-main">
             <img src="{{ url_for('static', filename='99664.gif') }}"
                  alt="Логотип Проземле-Агро"
                  class="pa-logo">
-            <div class="pa-org-info">
-                <div class="pa-org-name">ОАО «Проземле-Агро»</div>
-                <div class="pa-org-desc">
-                    Смешанное сельское хозяйство: мясо-молочное направление, КРС, растениеводство, зерновые, зернобобовые.
+            <div class="pa-header-text">
+                <div class="pa-brand">ОАО «Проземле-Агро»</div>
+                <div class="pa-header-subtitle">
+                    Смешанное сельское хозяйство · мясо-молочное направление · КРС · растениеводство ·
+                    зерновые и зернобобовые
                 </div>
-                <div class="pa-org-director">
+                <div class="pa-header-director">
                     Директор: Кулаков Виктор Иванович
                 </div>
             </div>
         </div>
-    </div>
 
-    <nav class="pa-nav">
-        <a href="{{ url_for('index') }}"
-           class="pa-nav-link {% if request.endpoint == 'index' %}pa-nav-active{% endif %}">
-            Каталоги
-        </a>
-        <a href="{{ url_for('stats') }}"
-           class="pa-nav-link {% if request.endpoint == 'stats' %}pa-nav-active{% endif %}">
-            Статистика
-        </a>
-    </nav>
-</header>
+        <nav class="pa-nav">
+            <a href="{{ url_for('index') }}"
+               class="pa-nav-link {% if request.endpoint == 'index' %}pa-nav-link-active{% endif %}">
+                Каталоги
+            </a>
+            <a href="{{ url_for('stats') }}"
+               class="pa-nav-link {% if request.endpoint == 'stats' %}pa-nav-link-active{% endif %}">
+                Статистика
+            </a>
+            <a href="{{ url_for('admin_logs') }}"
+               class="pa-nav-link pa-nav-link-secondary">
+                Админ
+            </a>
+        </nav>
+    </header>
 
-<main class="pa-main">
-    {% block content %}{% endblock %}
-</main>
+    <main class="pa-main">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            <div class="pa-flash-container">
+              {% for category, message in messages %}
+                <div class="pa-flash pa-flash-{{ category }}">
+                  {{ message }}
+                </div>
+              {% endfor %}
+            </div>
+          {% endif %}
+        {% endwith %}
 
-<footer class="pa-footer">
-    <span>Сервис подбора каталогов запчастей для техники ОАО «Проземле-Агро».</span>
-    <span>Версия 2.4 (каталоги + избранное + примечания + статистика).</span>
-</footer>
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="pa-footer">
+        <div class="pa-footer-main">
+            <span>© 2025 ОАО «Проземле-Агро»</span>
+            <span class="pa-footer-separator">•</span>
+            <span>Сервис подбора каталогов и запчастей</span>
+        </div>
+        <div class="pa-footer-meta">
+            <span>Версия 2.5 · каталоги + аналитика + журнал посещений</span>
+        </div>
+    </footer>
+</div>
 </body>
 </html>

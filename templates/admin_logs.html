@@ -1,0 +1,177 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="pa-card">
+    <div class="pa-results-header">
+        <h2>Журнал посещений</h2>
+        <div>
+            <a href="{{ url_for('admin_logout') }}" class="pa-button-secondary pa-button-small">
+                Выйти из админ-режима
+            </a>
+        </div>
+    </div>
+
+    <div class="pa-stats-grid">
+        <div class="pa-stat-card">
+            <div class="pa-stat-label">Всего записей</div>
+            <div class="pa-stat-value">{{ stats.total_entries }}</div>
+        </div>
+        <div class="pa-stat-card">
+            <div class="pa-stat-label">Уникальных IP</div>
+            <div class="pa-stat-value">{{ stats.unique_ips }}</div>
+        </div>
+    </div>
+</div>
+
+<div class="pa-card pa-card-two-columns">
+    <div class="pa-card-column">
+        <h3>ТОП IP по числу заходов</h3>
+        {% if stats.top_ips %}
+            <table class="pa-table pa-table-compact">
+                <thead>
+                <tr>
+                    <th>IP</th>
+                    <th>Заходов</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for item in stats.top_ips %}
+                    <tr>
+                        <td>{{ item.ip }}</td>
+                        <td>{{ item.count }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>Данных по IP пока нет.</p>
+        {% endif %}
+    </div>
+
+    <div class="pa-card-column">
+        <h3>ТОП путей</h3>
+        {% if stats.top_paths %}
+            <table class="pa-table pa-table-compact">
+                <thead>
+                <tr>
+                    <th>Путь</th>
+                    <th>Заходов</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for item in stats.top_paths %}
+                    <tr>
+                        <td>{{ item.path }}</td>
+                        <td>{{ item.count }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>Пока нет данных по путям.</p>
+        {% endif %}
+    </div>
+</div>
+
+<div class="pa-card pa-card-two-columns">
+    <div class="pa-card-column">
+        <h3>ТОП стран по посещениям</h3>
+        {% if stats.top_countries %}
+            <table class="pa-table pa-table-compact">
+                <thead>
+                <tr>
+                    <th>Страна</th>
+                    <th>Заходов</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for item in stats.top_countries %}
+                    <tr>
+                        <td>{{ item.country }}</td>
+                        <td>{{ item.count }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>Пока нет данных по странам.</p>
+        {% endif %}
+    </div>
+
+    <div class="pa-card-column">
+        <h3>ТОП городов по посещениям</h3>
+        {% if stats.top_cities %}
+            <table class="pa-table pa-table-compact">
+                <thead>
+                <tr>
+                    <th>Город</th>
+                    <th>Заходов</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for item in stats.top_cities %}
+                    <tr>
+                        <td>{{ item.city }}</td>
+                        <td>{{ item.count }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>Пока нет данных по городам.</p>
+        {% endif %}
+    </div>
+</div>
+
+<div class="pa-card">
+    <h3>Последние 200 запросов</h3>
+    {% if logs %}
+        <div class="pa-table-wrapper">
+            <table class="pa-table pa-table-compact pa-table-logs">
+                <thead>
+                <tr>
+                    <th>Время (UTC)</th>
+                    <th>IP</th>
+                    <th>Страна</th>
+                    <th>Город</th>
+                    <th>Client ID</th>
+                    <th>Метод</th>
+                    <th>Путь</th>
+                    <th>Каталог ID</th>
+                    <th>Referrer</th>
+                    <th>User-Agent</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for row in logs %}
+                    <tr>
+                        <td>{{ row.timestamp }}</td>
+                        <td>{{ row.ip }}</td>
+                        <td>{{ row.country }}</td>
+                        <td>{{ row.city }}</td>
+                        <td>{{ row.client_id }}</td>
+                        <td>{{ row.method }}</td>
+                        <td>{{ row.path }}</td>
+                        <td>
+                            {% if row.catalog_id %}
+                                {{ row.catalog_id }}
+                            {% else %}
+                                —
+                            {% endif %}
+                        </td>
+                        <td class="pa-log-referrer">
+                            {{ row.referrer or '' }}
+                        </td>
+                        <td class="pa-log-ua">
+                            {{ row.user_agent }}
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <p>Журнал пока пуст.</p>
+    {% endif %}
+</div>
+{% endblock %}
