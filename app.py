@@ -2,7 +2,16 @@ import os
 import re
 import uuid
 
-from flask import (Flask, render_template, request, redirect, url_for, flash, session, g)
+from flask import (
+    Flask,
+    render_template,
+    request,
+    redirect,
+    url_for,
+    flash,
+    session,
+    g,
+)
 from markupsafe import Markup, escape
 
 from db import (
@@ -26,7 +35,6 @@ from db import (
     search_stock,
     get_stock_filter_options,
 )
-
 
 app = Flask(__name__)
 # Нужен для flash и сессий
@@ -172,7 +180,11 @@ def index():
         favorites_only=filters["favorites_only"],
     )
 
-    log_search(filters)
+    # Логируем поиск (упрощённо: только фильтры)
+    try:
+        log_search(filters)
+    except Exception as e:
+        print(f"Ошибка log_search: {e}")
 
     options = get_filter_options()
     recent_searches = get_recent_searches(limit=10)
@@ -343,7 +355,12 @@ def open_catalog(catalog_id: int):
         flash("Запись каталога не найдена.", "error")
         return redirect(url_for("index"))
 
-    record_click(catalog_id)
+    # Лог клика по каталогу
+    try:
+        record_click(catalog_id)
+    except Exception as e:
+        print(f"Ошибка record_click: {e}")
+
     return redirect(rec.url)
 
 
@@ -386,6 +403,7 @@ def admin_logout():
     flash("Админ-доступ отключён.", "success")
     return redirect(url_for("index"))
 
+
 @app.route("/sklad")
 def warehouse():
     """
@@ -414,7 +432,6 @@ def warehouse():
         current_group=group,
         current_status=status,
     )
-
 
 
 if __name__ == "__main__":

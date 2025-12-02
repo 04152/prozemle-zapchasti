@@ -1,8 +1,9 @@
 from __future__ import annotations
 
+from datetime import datetime
 from pathlib import Path
 from urllib.parse import urlsplit
-from datetime import datetime
+from typing import Optional
 
 import pandas as pd
 from sqlalchemy import (
@@ -11,6 +12,7 @@ from sqlalchemy import (
     Integer,
     DateTime,
     Boolean,
+    Float,
     select,
     and_,
     or_,
@@ -19,15 +21,191 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, Session
 
-
-# --- Пути к файлам ---
+# ============================
+#  БАЗОВАЯ НАСТРОЙКА
+# ============================
 
 BASE_DIR = Path(__file__).resolve().parent
-DATA_FILE = BASE_DIR / "Каталоги_запчастей_ПроземлеАгро.xlsx"
-DB_FILE = BASE_DIR / "catalogs.db"
+DB_PATH = BASE_DIR / "catalogs.db"
+EXCEL_PATH = BASE_DIR / "Каталоги_запчастей_ПроземлеАгро.xlsx"
+
+engine = create_engine(
+    f"sqlite:///{DB_PATH}",
+    echo=False,
+    future=True,
+)
 
 
-# --- Попытка подключить GeoLite2-City для геолокации IP ---
+class Base(DeclarativeBase):
+    pass
+
+
+# ============================
+#  МОДЕЛИ
+# ============================
+
+
+class Catalog(Base):
+    __tablename__ = "catalogs"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+
+    group_name: Mapped[Optional[str]] = mapped_column(String(200))
+    models: Mapped[Optional[str]] = mapped_column(String(300))
+    type: Mapped[Optional[str]] = mapped_column(String(200))
+    description: Mapped[Optional[str]] = mapped_column(String(500))
+
+    url: Mapped[str] = mapped_column(String(500))
+    domain: Mapped[Optional[str]] = mapped_column(String(200))
+
+    status: Mapped[Optional[str]] = mapped_column(String(50))
+    source_type: Mapped[Optional[str]] = mapped_column(String(50))
+
+    is_favorite: Mapped[bool] = mapped_column(Boolean, default=False)
+    engineer_note: Mapped[Optional[str]] = mapped_column(String(500))
+
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
+class SearchLog(Base):
+    __tablename__ = "search_logs"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    query: Mapped[Optional[str]] = mapped_column(String(300))
+    group_filter: Mapped[Optional[str]] = mapped_column(String(200))
+    type_filter: Mapped[Optional[str]] = mapped_column(String(200))
+    has_favorite: Mapped[bool] = mapped_column(Boolean, default=False)
+    results_count: Mapped[int] = mapped_column(Integer, default=0)
+
+    client_id: Mapped[Optional[str]] = mapped_column(String(100))
+    ip: Mapped[Optional[str]] = mapped_column(String(50))
+    ua: Mapped[Optional[str]] = mapped_column(String(500))
+
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
+class SavedQuery(Base):
+    __tablename__ = "saved_queries"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    title: Mapped[str] = mapped_column(String(200))
+    query: Mapped[Optional[str]] = mapped_column(String(300))
+    group_filter: Mapped[Optional[str]] = mapped_column(String(200))
+    type_filter: Mapped[Optional[str]] = mapped_column(String(200))
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+    # --- дополнительные "удобные" свойства, чтобы use_query в app.py работал как есть ---
+
+    @property
+    def group_name(self) -> str:
+        return self.group_filter or ""
+
+    @property
+    def model_fragment(self) -> str:
+        # пока нигде не храним фильтр по модели — оставляем пустым
+        return ""
+
+    @property
+    def catalog_type(self) -> str:
+        return self.type_filter or ""
+
+    @property
+    def country(self) -> str:
+        # страна тоже пока не хранится отдельно
+        return ""
+
+
+class CatalogClickLog(Base):
+    __tablename__ = "catalog_click_logs"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    catalog_id: Mapped[int] = mapped_column(Integer)
+
+    client_id: Mapped[Optional[str]] = mapped_column(String(100))
+    ip: Mapped[Optional[str]] = mapped_column(String(50))
+    ua: Mapped[Optional[str]] = mapped_column(String(500))
+    referrer: Mapped[Optional[str]] = mapped_column(String(500))
+
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
+class AccessLog(Base):
+    __tablename__ = "access_logs"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    path: Mapped[str] = mapped_column(String(200))
+    method: Mapped[str] = mapped_column(String(10))
+    ip: Mapped[Optional[str]] = mapped_column(String(50))
+    ua: Mapped[Optional[str]] = mapped_column(String(500))
+    referrer: Mapped[Optional[str]] = mapped_column(String(500))
+
+    country: Mapped[Optional[str]] = mapped_column(String(100))
+    city: Mapped[Optional[str]] = mapped_column(String(100))
+
+    client_id: Mapped[Optional[str]] = mapped_column(String(100))
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
+class PartStock(Base):
+    """
+    Склад запчастей (остатки).
+    """
+
+    __tablename__ = "parts_stock"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    part_number: Mapped[Optional[str]] = mapped_column(String(100))     # номер детали / артикул
+    name: Mapped[Optional[str]] = mapped_column(String(300))            # наименование
+    group_name: Mapped[Optional[str]] = mapped_column(String(200))      # группа техники
+    models: Mapped[Optional[str]] = mapped_column(String(300))          # модели техники (строка)
+
+    quantity: Mapped[Optional[float]] = mapped_column(Float)            # остаток
+    min_quantity: Mapped[Optional[float]] = mapped_column(Float)        # минимальный остаток
+
+    location: Mapped[Optional[str]] = mapped_column(String(200))        # место хранения
+    status: Mapped[Optional[str]] = mapped_column(String(50))           # например: "в работе", "устарело", ...
+
+    engineer_note: Mapped[Optional[str]] = mapped_column(String(500))   # примечание инженера
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
+# ================================
+#  Таблица заявок "На закупку"
+# ================================
+
+class PartRequest(Base):
+    __tablename__ = "part_requests"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+
+    # Основная информация о детали
+    part_number: Mapped[Optional[str]] = mapped_column(String(100), default=None)
+    name: Mapped[Optional[str]] = mapped_column(String(300), default=None)
+    model: Mapped[Optional[str]] = mapped_column(String(200), default=None)
+    group_name: Mapped[Optional[str]] = mapped_column(String(200), default=None)
+
+    # Связь с каталогом (опционально)
+    catalog_id: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    source_url: Mapped[Optional[str]] = mapped_column(String(500), default=None)
+
+    # Кто подал заявку
+    requester_ip: Mapped[Optional[str]] = mapped_column(String(50), default=None)
+    requester_ua: Mapped[Optional[str]] = mapped_column(String(500), default=None)
+
+    # Статус обработки заявки
+    # new / in_work / ordered / received / cancelled
+    status: Mapped[str] = mapped_column(String(30), default="new", index=True)
+
+    # Комментарий инженера
+    note: Mapped[Optional[str]] = mapped_column(String(500), default=None)
+
+    # Дата создания
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, index=True)
+
+
+# ============================
+#  GEOIP (СТРАНА/ГОРОД ПО IP)
+# ============================
 
 GEOIP_READER = None
 try:
@@ -46,345 +224,142 @@ except ImportError:
     print("GeoIP: пакет geoip2 не установлен, геолокация отключена.")
 
 
-# --- Базовый класс SQLAlchemy ---
-
-class Base(DeclarativeBase):
-    pass
-
-
-# --- Таблицы ---
-
-class Catalog(Base):
-    __tablename__ = "catalogs"
-
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-
-    # Основные поля
-    group_name: Mapped[str] = mapped_column(String(255), index=True)
-    models: Mapped[str] = mapped_column(String(255), index=True)
-    catalog_type: Mapped[str] = mapped_column(String(100), index=True)
-    description: Mapped[str] = mapped_column(String(1000))
-    url: Mapped[str] = mapped_column(String(1000))
-
-    # Сведения об источнике
-    domain: Mapped[str] = mapped_column(String(255), index=True)
-    source_country: Mapped[str] = mapped_column(String(10), index=True, default="")
-    catalog_number: Mapped[str] = mapped_column(String(255), default="")
-    part_numbers: Mapped[str] = mapped_column(String(1000), default="")
-
-    # Служебные поля
-    status: Mapped[str] = mapped_column(String(50), index=True, default="")
-    source_type: Mapped[str] = mapped_column(String(50), index=True, default="")
-    favorite: Mapped[bool] = mapped_column(Boolean, index=True, default=False)
-    engineer_note: Mapped[str] = mapped_column(String(1000), default="")
-
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
-    updated_at: Mapped[datetime] = mapped_column(
-        DateTime,
-        default=datetime.utcnow,
-        onupdate=datetime.utcnow,
-    )
-
-
-class SearchLog(Base):
-    __tablename__ = "search_logs"
-
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime, default=datetime.utcnow, index=True
-    )
-
-    group_name: Mapped[str] = mapped_column(String(255), default="")
-    model_fragment: Mapped[str] = mapped_column(String(255), default="")
-    catalog_type: Mapped[str] = mapped_column(String(100), default="")
-    country: Mapped[str] = mapped_column(String(10), default="")
-    query: Mapped[str] = mapped_column(String(1000), default="")
-
-
-class SavedQuery(Base):
-    __tablename__ = "saved_queries"
-
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime, default=datetime.utcnow, index=True
-    )
-
-    title: Mapped[str] = mapped_column(String(255))
-
-    group_name: Mapped[str] = mapped_column(String(255), default="")
-    model_fragment: Mapped[str] = mapped_column(String(255), default="")
-    catalog_type: Mapped[str] = mapped_column(String(100), default="")
-    country: Mapped[str] = mapped_column(String(10), default="")
-    query: Mapped[str] = mapped_column(String(1000), default="")
-
-
-class CatalogClickLog(Base):
-    __tablename__ = "catalog_click_logs"
-
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    catalog_id: Mapped[int] = mapped_column(Integer, index=True)
-    clicked_at: Mapped[datetime] = mapped_column(
-        DateTime, default=datetime.utcnow, index=True
-    )
-
-
-class AccessLog(Base):
-    """Лог всех заходов на сайт (кроме статики)."""
-
-    __tablename__ = "access_logs"
-
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    timestamp: Mapped[datetime] = mapped_column(
-        DateTime, default=datetime.utcnow, index=True
-    )
-
-    path: Mapped[str] = mapped_column(String(255), index=True)
-    method: Mapped[str] = mapped_column(String(10))
-    ip: Mapped[str] = mapped_column(String(45), index=True)
-    user_agent: Mapped[str] = mapped_column(String(500))
-    referrer: Mapped[str] = mapped_column(String(500))
-    client_id: Mapped[str] = mapped_column(String(64), index=True, default="")
-    catalog_id: Mapped[int | None] = mapped_column(Integer, index=True, nullable=True)
-    country: Mapped[str] = mapped_column(String(64), index=True, default="")
-    city: Mapped[str] = mapped_column(String(128), index=True, default="")
-
-
-class PartStock(Base):
+def lookup_geo(ip: Optional[str]) -> tuple[str, str]:
     """
-    Таблица склада запчастей.
-    На этом этапе — только базовые поля и просмотр.
+    Возвращает (country, city) по IP, если база GeoLite2 есть.
+    Иначе — ("", "").
     """
-
-    __tablename__ = "parts_stock"
-
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-
-    part_number: Mapped[str] = mapped_column(String(100), index=True)   # номер детали / артикул
-    name: Mapped[str] = mapped_column(String(255))                      # наименование
-
-    group_name: Mapped[str] = mapped_column(String(255), index=True, default="")  # группа техники
-    models: Mapped[str] = mapped_column(String(255), default="")                  # к каким моделям относится
-
-    quantity: Mapped[int] = mapped_column(Integer, default=0)          # остаток
-    min_quantity: Mapped[int] = mapped_column(Integer, default=0)      # минимальный остаток
-
-    location: Mapped[str] = mapped_column(String(255), default="")     # место хранения
-    status: Mapped[str] = mapped_column(String(50), index=True, default="в наличии")
-
-    engineer_note: Mapped[str] = mapped_column(String(1000), default="")
-
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
-    updated_at: Mapped[datetime] = mapped_column(
-        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
-    )
+    if not ip or not GEOIP_READER:
+        return "", ""
+    try:
+        r = GEOIP_READER.city(ip)
+        country = r.country.name or ""
+        city = r.city.name or ""
+        return country or "", city or ""
+    except Exception:
+        return "", ""
 
 
-# --- Движок БД ---
-
-engine = create_engine(f"sqlite:///{DB_FILE}", echo=False, future=True)
-
+# ============================
+#  ИНИЦИАЛИЗАЦИЯ БД
+# ============================
 
 def init_db() -> None:
-    """Создать все таблицы, если их ещё нет."""
     Base.metadata.create_all(engine)
 
 
-# --- Настройки импорта и фильтрации доменов ---
+# ============================
+#  РАБОТА С КАТАЛОГАМИ
+# ============================
 
-BLOCKED_DOMAINS = {
-    "machinetechdoc.com",
-    "servicepartmanuals.com",
-    "interdalnoboy.com",
-    "www.avtozapchasty.ru",
-    "avtozapchasty.ru",
-    "avtofiles.com",
-    "www.niva-club.net",
-    "niva-club.net",
-}
-
-
-def get_domain(url: str) -> str:
-    try:
-        return urlsplit(url).netloc.lower()
-    except Exception:
-        return ""
+def _load_excel_catalogs() -> pd.DataFrame:
+    """
+    Загружает каталоги из Excel в DataFrame.
+    Ожидается структура столбцов, как в твоём файле.
+    """
+    if not EXCEL_PATH.exists():
+        raise FileNotFoundError(f"Excel-файл с каталогами не найден: {EXCEL_PATH}")
+    df = pd.read_excel(EXCEL_PATH)
+    # Подчистим пробелы в названиях столбцов
+    df.columns = [str(c).strip() for c in df.columns]
+    return df
 
 
-def guess_country_by_domain(domain: str) -> str:
-    """Очень грубо: по домену .by / .ru / прочее."""
-    if domain.endswith(".by"):
-        return "BY"
-    if domain.endswith(".ru"):
-        return "RU"
-    return "OTHER"
-
-
-def _parse_favorite(value) -> bool:
-    """Понять, что в Excel ячейка означает 'Избранное'."""
-    if value is None:
-        return False
-    s = str(value).strip().lower()
-    if not s:
-        return False
-    return s in {"1", "да", "yes", "true", "y", "д"}
-
-
-# --- Импорт из Excel в таблицу catalogs ---
-
-def import_from_excel() -> int:
+def refresh_catalogs_from_excel() -> int:
     """
     Полностью пересобирает таблицу catalogs из Excel-файла.
-    Возвращает количество загруженных записей.
+    Возвращает количество загруженных строк.
     """
-    if not DATA_FILE.exists():
-        raise FileNotFoundError(f"Не найден Excel-файл: {DATA_FILE}")
+    df = _load_excel_catalogs()
 
-    df = pd.read_excel(DATA_FILE)
-
-    required = {"Группа техники", "Модели", "Тип каталога", "Описание", "Ссылка"}
-    missing = required - set(df.columns)
-    if missing:
-        raise ValueError(f"В Excel не хватает столбцов: {', '.join(missing)}")
-
-    df = df.dropna(subset=["Ссылка"]).copy()
-
-    for col in ["Группа техники", "Модели", "Тип каталога", "Описание", "Ссылка"]:
-        df[col] = df[col].astype(str).str.strip()
+    # Нормализуем ожидаемые поля
+    for col in ["Группа техники", "Модели", "Тип", "Описание", "Ссылка", "Статус", "Источник"]:
+        if col not in df.columns:
+            df[col] = None
 
     records: list[Catalog] = []
-
     for _, row in df.iterrows():
-        url = row["Ссылка"].strip()
-        if not (url.startswith("http://") or url.startswith("https://")):
+        url = str(row.get("Ссылка", "")).strip()
+        if not url:
             continue
 
-        domain = get_domain(url)
-        if domain in BLOCKED_DOMAINS:
-            continue
+        domain = urlsplit(url).netloc or None
 
-        group_name = row["Группа техники"].strip()
-        models = row["Модели"].strip()
-        catalog_type = row["Тип каталога"].strip()
-        description = row["Описание"].strip()
-
-        catalog_number = str(row.get("Номер каталога", "") or "").strip()
-        part_numbers = str(row.get("Каталожные номера", "") or "").strip()
-
-        status = str(row.get("Статус", "") or "").strip()
-        if not status:
-            status = "актуальный"
-
-        source_type = str(row.get("Источник", "") or "").strip()
-        favorite = _parse_favorite(row.get("Избранное"))
-        engineer_note = str(row.get("Примечание инженера", "") or "").strip()
-
-        record = Catalog(
-            group_name=group_name,
-            models=models,
-            catalog_type=catalog_type,
-            description=description,
+        rec = Catalog(
+            group_name=str(row.get("Группа техники") or "").strip() or None,
+            models=str(row.get("Модели") or "").strip() or None,
+            type=str(row.get("Тип") or "").strip() or None,
+            description=str(row.get("Описание") or "").strip() or None,
             url=url,
             domain=domain,
-            source_country=guess_country_by_domain(domain),
-            catalog_number=catalog_number,
-            part_numbers=part_numbers,
-            status=status,
-            source_type=source_type,
-            favorite=favorite,
-            engineer_note=engineer_note,
+            status=str(row.get("Статус") or "").strip() or None,
+            source_type=str(row.get("Источник") or "").strip() or None,
         )
-        records.append(record)
+        records.append(rec)
 
     with Session(engine) as session:
         session.query(Catalog).delete()
-        session.add_all(records)
+        session.bulk_save_objects(records)
         session.commit()
 
     return len(records)
 
 
-# --- Поиск по каталогам ---
-
-def search_catalogs(
-    group: str | None = None,
-    model_fragment: str | None = None,
-    catalog_type: str | None = None,
-    query: str | None = None,
-    country_filter: str | None = None,
-    favorites_only: bool = False,
-) -> list[Catalog]:
+def import_from_excel() -> int:
     """
-    Поиск по таблице catalogs с учётом всех фильтров.
+    Обёртка для удобства — используется в app.py.
     """
-    with Session(engine) as session:
-        stmt = select(Catalog)
-        conditions = []
-
-        if group:
-            conditions.append(Catalog.group_name == group)
-
-        if model_fragment:
-            pattern = f"%{model_fragment.strip()}%"
-            conditions.append(Catalog.models.ilike(pattern))
-
-        if catalog_type:
-            conditions.append(Catalog.catalog_type == catalog_type)
-
-        if country_filter in {"BY", "RU", "OTHER"}:
-            conditions.append(Catalog.source_country == country_filter)
-
-        if favorites_only:
-            conditions.append(Catalog.favorite.is_(True))
-
-        if query:
-            terms = [t.strip() for t in query.lower().split() if t.strip()]
-            if terms:
-                word_conditions = []
-                for term in terms:
-                    p = f"%{term}%"
-                    word_conditions.append(
-                        or_(
-                            Catalog.models.ilike(p),
-                            Catalog.description.ilike(p),
-                            Catalog.url.ilike(p),
-                            Catalog.catalog_number.ilike(p),
-                            Catalog.part_numbers.ilike(p),
-                        )
-                    )
-                conditions.append(and_(*word_conditions))
-
-        if conditions:
-            stmt = stmt.where(and_(*conditions))
-
-        stmt = stmt.order_by(Catalog.group_name, Catalog.models, Catalog.catalog_type)
-
-        result = session.scalars(stmt).all()
-        return list(result)
+    return refresh_catalogs_from_excel()
 
 
-def get_filter_options() -> dict:
+def _extract_country_code_from_domain(domain: str | None) -> Optional[str]:
+    if not domain:
+        return None
+    parts = domain.lower().split(".")
+    if len(parts) < 2:
+        return None
+    tld = parts[-1]
+    return tld  # by, ru, com, ...
+
+def get_catalog_filters() -> dict:
     """
-    Наборы значений для выпадающих списков (группа, тип, страна).
+    Возвращает варианты значений для фильтров:
+    - группы техники
+    - типы
+    - страны (по TLD домена: by, ru, com и т.п.)
     """
     with Session(engine) as session:
         groups = [
-            g[0]
-            for g in session.query(Catalog.group_name)
-            .distinct()
-            .order_by(Catalog.group_name)
+            g for (g,) in session.execute(
+                select(Catalog.group_name)
+                .where(Catalog.group_name.is_not(None))
+                .distinct()
+                .order_by(Catalog.group_name)
+            )
         ]
         types = [
-            t[0]
-            for t in session.query(Catalog.catalog_type)
-            .distinct()
-            .order_by(Catalog.catalog_type)
+            t for (t,) in session.execute(
+                select(Catalog.type)
+                .where(Catalog.type.is_not(None))
+                .distinct()
+                .order_by(Catalog.type)
+            )
         ]
-        countries = [
-            c[0]
-            for c in session.query(Catalog.source_country)
+
+        domains = session.execute(
+            select(Catalog.domain)
+            .where(Catalog.domain.is_not(None))
             .distinct()
-            .order_by(Catalog.source_country)
-        ]
+        ).all()
+
+        country_codes: set[str] = set()
+        for (dom,) in domains:
+            code = _extract_country_code_from_domain(dom)
+            if code:
+                country_codes.add(code.upper())
+
+    countries = sorted(country_codes)
+
     return {
         "groups": groups,
         "types": types,
@@ -392,376 +367,462 @@ def get_filter_options() -> dict:
     }
 
 
-# --- Операции с одной записью каталога ---
+def get_filter_options() -> dict:
+    """
+    Старое/универсальное имя для app.py.
+    """
+    return get_catalog_filters()
 
-def get_catalog_by_id(catalog_id: int) -> Catalog | None:
+
+def search_catalogs(
+    group: Optional[str] = None,
+    model_fragment: Optional[str] = None,
+    catalog_type: Optional[str] = None,
+    query: Optional[str] = None,
+    country_filter: Optional[str] = None,
+    favorites_only: bool = False,
+) -> list[Catalog]:
+    """
+    Поиск по каталогам под сигнатуру, которую ожидает app.py.
+    """
     with Session(engine) as session:
-        return session.get(Catalog, catalog_id)
+        stmt = select(Catalog)
+        conditions = []
+
+        # Поисковая строка
+        if query:
+            q = f"%{query.strip().lower()}%"
+            conditions.append(
+                or_(
+                    func.lower(Catalog.models).like(q),
+                    func.lower(Catalog.description).like(q),
+                    func.lower(Catalog.group_name).like(q),
+                )
+            )
+
+        # Фрагмент модели
+        if model_fragment:
+            mf = f"%{model_fragment.strip().lower()}%"
+            conditions.append(func.lower(Catalog.models).like(mf))
+
+        # Группа техники
+        if group:
+            conditions.append(Catalog.group_name == group)
+
+        # Тип каталога
+        if catalog_type:
+            conditions.append(Catalog.type == catalog_type)
+
+        # Фильтр по "стране" (по TLD домена)
+        if country_filter:
+            cf = country_filter.strip().lower()
+            # домен заканчивается на нужный TLD
+            like_pattern = f"%.{cf}"
+            conditions.append(func.lower(Catalog.domain).like(like_pattern))
+
+        if favorites_only:
+            conditions.append(Catalog.is_favorite.is_(True))
+
+        if conditions:
+            stmt = stmt.where(and_(*conditions))
+
+        stmt = stmt.order_by(
+            desc(Catalog.is_favorite),
+            Catalog.group_name,
+            Catalog.models,
+        )
+
+        return list(session.scalars(stmt).all())
 
 
-def toggle_favorite_flag(catalog_id: int) -> bool | None:
+def toggle_favorite(catalog_id: int) -> bool | None:
     with Session(engine) as session:
         obj = session.get(Catalog, catalog_id)
         if not obj:
             return None
-        obj.favorite = not bool(obj.favorite)
+        obj.is_favorite = not obj.is_favorite
         session.commit()
-        return obj.favorite
+        return obj.is_favorite
 
 
-def update_engineer_note(catalog_id: int, note: str) -> bool:
+def toggle_favorite_flag(catalog_id: int) -> bool | None:
+    """
+    Обёртка под имя, которое использует app.py.
+    """
+    return toggle_favorite(catalog_id)
+
+
+def update_notes(
+    catalog_id: int,
+    note: Optional[str] = None,
+) -> bool:
     with Session(engine) as session:
         obj = session.get(Catalog, catalog_id)
         if not obj:
             return False
-        obj.engineer_note = note.strip()
+        obj.engineer_note = note
         session.commit()
         return True
 
 
-# --- Логирование поисков и сохранённые шаблоны ---
+def update_engineer_note(catalog_id: int, note: str) -> bool:
+    """
+    Обёртка для app.py.
+    """
+    return update_notes(catalog_id, note=note)
+
+
+def get_catalog_by_id(catalog_id: int) -> Optional[Catalog]:
+    with Session(engine) as session:
+        return session.get(Catalog, catalog_id)
+
+
+# ============================
+#  ЛОГИ ПОИСКА И КЛИКОВ
+# ============================
+
+def _log_search_low_level(
+    *,
+    query: Optional[str],
+    group_filter: Optional[str],
+    type_filter: Optional[str],
+    has_favorite: bool,
+    results_count: int,
+    client_id: Optional[str],
+    ip: Optional[str],
+    ua: Optional[str],
+) -> None:
+    with Session(engine) as session:
+        rec = SearchLog(
+            query=query,
+            group_filter=group_filter,
+            type_filter=type_filter,
+            has_favorite=has_favorite,
+            results_count=results_count,
+            client_id=client_id,
+            ip=ip,
+            ua=ua,
+        )
+        session.add(rec)
+        session.commit()
+
 
 def log_search(filters: dict) -> None:
     """
-    Сохраняет в SearchLog содержательный поиск (если есть хоть один фильтр).
+    Упрощённый лог поиска под то, как его вызывает app.py:
+    log_search(filters)
     """
-    has_content = any(
-        [
-            filters.get("group"),
-            filters.get("model"),
-            filters.get("catalog_type"),
-            filters.get("country"),
-            filters.get("query"),
-        ]
+    query = (filters.get("query") or "").strip() or None
+    group_filter = (filters.get("group") or "").strip() or None
+    type_filter = (filters.get("catalog_type") or "").strip() or None
+    has_favorite = bool(filters.get("favorites_only"))
+    # Пока не считаем реальное число результатов — пишем 0
+    _log_search_low_level(
+        query=query,
+        group_filter=group_filter,
+        type_filter=type_filter,
+        has_favorite=has_favorite,
+        results_count=0,
+        client_id=None,
+        ip=None,
+        ua=None,
     )
-    if not has_content:
-        return
 
+
+def log_click(
+    *,
+    catalog_id: int,
+    client_id: Optional[str],
+    ip: Optional[str],
+    ua: Optional[str],
+    referrer: Optional[str],
+) -> None:
     with Session(engine) as session:
-        entry = SearchLog(
-            group_name=filters.get("group", "") or "",
-            model_fragment=filters.get("model", "") or "",
-            catalog_type=filters.get("catalog_type", "") or "",
-            country=filters.get("country", "") or "",
-            query=filters.get("query", "") or "",
+        rec = CatalogClickLog(
+            catalog_id=catalog_id,
+            client_id=client_id,
+            ip=ip,
+            ua=ua,
+            referrer=referrer,
         )
-        session.add(entry)
+        session.add(rec)
         session.commit()
 
 
-def get_recent_searches(limit: int = 10) -> list[SearchLog]:
+def record_click(catalog_id: int) -> None:
+    """
+    Обёртка для app.py — минимальный лог клика по каталогу.
+    """
+    log_click(
+        catalog_id=catalog_id,
+        client_id=None,
+        ip=None,
+        ua=None,
+        referrer=None,
+    )
+
+
+# ============================
+#  СОХРАНЁННЫЕ ЗАПРОСЫ / СТАТИСТИКА
+# ============================
+
+def get_recent_queries(limit: int = 10) -> list[SearchLog]:
     with Session(engine) as session:
         stmt = (
             select(SearchLog)
-            .order_by(desc(SearchLog.created_at), desc(SearchLog.id))
+            .order_by(desc(SearchLog.created_at))
             .limit(limit)
         )
         return list(session.scalars(stmt).all())
 
 
-def create_saved_query(title: str, filters: dict) -> SavedQuery | None:
+def get_recent_searches(limit: int = 10) -> list[SearchLog]:
     """
-    Создаёт сохранённый шаблон поиска.
+    Старое имя функции, используемое в app.py.
     """
-    has_content = any(
-        [
-            filters.get("group"),
-            filters.get("model"),
-            filters.get("catalog_type"),
-            filters.get("country"),
-            filters.get("query"),
-        ]
-    )
-    if not has_content:
+    return get_recent_queries(limit=limit)
+
+
+def get_saved_queries(limit: Optional[int] = None) -> list[SavedQuery]:
+    with Session(engine) as session:
+        stmt = select(SavedQuery).order_by(desc(SavedQuery.created_at))
+        if limit:
+            stmt = stmt.limit(limit)
+        return list(session.scalars(stmt).all())
+
+
+def save_query(
+    title: str,
+    query: Optional[str],
+    group_filter: Optional[str],
+    type_filter: Optional[str],
+) -> SavedQuery:
+    with Session(engine) as session:
+        rec = SavedQuery(
+            title=title,
+            query=query,
+            group_filter=group_filter,
+            type_filter=type_filter,
+        )
+        session.add(rec)
+        session.commit()
+        session.refresh(rec)
+        return rec
+
+
+def create_saved_query(title: str, filters: dict) -> Optional[SavedQuery]:
+    """
+    Используется в app.py: create_saved_query(title, filters).
+    Сохраняем только часть фильтров (query, group, catalog_type),
+    чтобы не трогать структуру БД.
+    """
+    query = (filters.get("query") or "").strip()
+    group_filter = (filters.get("group") or "").strip()
+    type_filter = (filters.get("catalog_type") or "").strip()
+
+    # Если все фильтры пустые — не сохраняем
+    if not any([query, group_filter, type_filter]):
         return None
 
+    return save_query(
+        title=title,
+        query=query or None,
+        group_filter=group_filter or None,
+        type_filter=type_filter or None,
+    )
+
+
+def get_saved_query_by_id(saved_id: int) -> Optional[SavedQuery]:
     with Session(engine) as session:
-        obj = SavedQuery(
-            title=title.strip(),
-            group_name=filters.get("group", "") or "",
-            model_fragment=filters.get("model", "") or "",
-            catalog_type=filters.get("catalog_type", "") or "",
-            country=filters.get("country", "") or "",
-            query=filters.get("query", "") or "",
-        )
-        session.add(obj)
+        return session.get(SavedQuery, saved_id)
+
+
+def delete_saved_query(saved_id: int) -> bool:
+    with Session(engine) as session:
+        obj = session.get(SavedQuery, saved_id)
+        if not obj:
+            return False
+        session.delete(obj)
         session.commit()
-        session.refresh(obj)
-        return obj
+        return True
 
 
-def get_saved_queries(limit: int = 20) -> list[SavedQuery]:
+def get_stats(top_limit: int = 10) -> dict:
     with Session(engine) as session:
-        stmt = (
-            select(SavedQuery)
-            .order_by(desc(SavedQuery.created_at), desc(SavedQuery.id))
-            .limit(limit)
+        total_catalogs = session.scalar(select(func.count(Catalog.id))) or 0
+        total_favorites = session.scalar(
+            select(func.count(Catalog.id)).where(Catalog.is_favorite.is_(True))
+        ) or 0
+
+        total_searches = session.scalar(select(func.count(SearchLog.id))) or 0
+
+        # Топ запросов
+        top_queries = (
+            session.execute(
+                select(
+                    SearchLog.query,
+                    func.count(SearchLog.id).label("cnt")
+                )
+                .where(SearchLog.query.is_not(None))
+                .group_by(SearchLog.query)
+                .order_by(desc("cnt"))
+                .limit(top_limit)
+            )
+            .all()
         )
-        return list(session.scalars(stmt).all())
 
+        # Топ доменов
+        top_domains = (
+            session.execute(
+                select(
+                    Catalog.domain,
+                    func.count(Catalog.id).label("cnt")
+                )
+                .where(Catalog.domain.is_not(None))
+                .group_by(Catalog.domain)
+                .order_by(desc("cnt"))
+                .limit(top_limit)
+            )
+            .all()
+        )
 
-def get_saved_query_by_id(query_id: int) -> SavedQuery | None:
-    with Session(engine) as session:
-        return session.get(SavedQuery, query_id)
-
-
-# --- Логирование кликов по каталогам и общая статистика ---
-
-def record_click(catalog_id: int) -> None:
-    with Session(engine) as session:
-        session.add(CatalogClickLog(catalog_id=catalog_id))
-        session.commit()
+    return {
+        "total_catalogs": total_catalogs,
+        "total_favorites": total_favorites,
+        "total_searches": total_searches,
+        "top_queries": top_queries,
+        "top_domains": top_domains,
+    }
 
 
 def get_usage_stats(limit: int = 10) -> dict:
     """
-    Статистика использования каталога (по поискам и кликам по ссылкам).
+    Обёртка для app.py.
     """
-    with Session(engine) as session:
-        total_searches = session.query(func.count(SearchLog.id)).scalar() or 0
-        total_saved_queries = session.query(func.count(SavedQuery.id)).scalar() or 0
-        total_clicks = session.query(func.count(CatalogClickLog.id)).scalar() or 0
-
-        group_data = (
-            session.query(SearchLog.group_name, func.count(SearchLog.id))
-            .filter(SearchLog.group_name != "")
-            .group_by(SearchLog.group_name)
-            .order_by(func.count(SearchLog.id).desc())
-            .limit(limit)
-            .all()
-        )
-        group_searches = [{"name": name, "count": cnt} for name, cnt in group_data]
-
-        model_data = (
-            session.query(SearchLog.model_fragment, func.count(SearchLog.id))
-            .filter(SearchLog.model_fragment != "")
-            .group_by(SearchLog.model_fragment)
-            .order_by(func.count(SearchLog.id).desc())
-            .limit(limit)
-            .all()
-        )
-        model_searches = [{"name": name, "count": cnt} for name, cnt in model_data]
-
-        catalog_data = (
-            session.query(Catalog, func.count(CatalogClickLog.id))
-            .join(CatalogClickLog, CatalogClickLog.catalog_id == Catalog.id)
-            .group_by(Catalog.id)
-            .order_by(func.count(CatalogClickLog.id).desc())
-            .limit(limit)
-            .all()
-        )
-        top_catalog_clicks = [
-            {"catalog": catalog, "count": cnt} for catalog, cnt in catalog_data
-        ]
-
-        domain_data = (
-            session.query(Catalog.domain, func.count(CatalogClickLog.id))
-            .join(CatalogClickLog, CatalogClickLog.catalog_id == Catalog.id)
-            .filter(Catalog.domain != "")
-            .group_by(Catalog.domain)
-            .order_by(func.count(CatalogClickLog.id).desc())
-            .limit(limit)
-            .all()
-        )
-        domain_clicks = [{"domain": d, "count": cnt} for d, cnt in domain_data]
-
-    return {
-        "total_searches": total_searches,
-        "total_saved_queries": total_saved_queries,
-        "total_clicks": total_clicks,
-        "group_searches": group_searches,
-        "model_searches": model_searches,
-        "top_catalog_clicks": top_catalog_clicks,
-        "domain_clicks": domain_clicks,
-    }
+    return get_stats(top_limit=limit)
 
 
-# --- Геолокация по IP и логирование заходов (access_logs) ---
-
-def lookup_geo(ip: str) -> tuple[str, str]:
-    """
-    Возвращает (country_iso2, city_name) по IP, если возможно.
-    Если база/пакет недоступны или IP локальный — ("", "").
-    """
-    if not ip:
-        return "", ""
-
-    # Локальные/частные сети не геолоцируем
-    private_prefixes = (
-        "127.",
-        "10.",
-        "192.168.",
-        "172.16.",
-        "172.17.",
-        "172.18.",
-        "172.19.",
-        "172.20.",
-        "172.21.",
-        "172.22.",
-        "172.23.",
-        "172.24.",
-        "172.25.",
-        "172.26.",
-        "172.27.",
-        "172.28.",
-        "172.29.",
-        "172.30.",
-        "172.31.",
-    )
-    if ip.startswith(private_prefixes):
-        return "", ""
-
-    if GEOIP_READER is None:
-        return "", ""
-
-    try:
-        r = GEOIP_READER.city(ip)
-        country = r.country.iso_code or ""
-        city = r.city.name or ""
-        return country or "", city or ""
-    except Exception:
-        return "", ""
-
+# ============================
+#  ЛОГИ ПОСЕЩЕНИЙ (ACCESS_LOG)
+# ============================
 
 def add_access_log(
     *,
     path: str,
     method: str,
-    ip: str,
-    user_agent: str,
-    referrer: str,
-    client_id: str | None = None,
-    catalog_id: int | None = None,
+    ip: Optional[str],
+    user_agent: Optional[str],
+    referrer: Optional[str],
+    client_id: Optional[str],
+    catalog_id: Optional[int] = None,  # сейчас не используем, но параметр принимаем
 ) -> None:
-    """
-    Добавляет запись в AccessLog, с попыткой определить страну и город.
-    """
     country, city = lookup_geo(ip)
-
     with Session(engine) as session:
-        log = AccessLog(
+        rec = AccessLog(
             path=path,
             method=method,
             ip=ip,
-            user_agent=user_agent,
+            ua=user_agent,
             referrer=referrer,
-            client_id=client_id or "",
-            catalog_id=catalog_id,
-            country=country,
-            city=city,
+            country=country or None,
+            city=city or None,
+            client_id=client_id,
         )
-        session.add(log)
+        session.add(rec)
         session.commit()
 
 
 def get_last_access_logs(limit: int = 200) -> list[AccessLog]:
-    """
-    Возвращает последние N записей из журнала посещений.
-    """
     with Session(engine) as session:
         stmt = (
             select(AccessLog)
-            .order_by(desc(AccessLog.timestamp), desc(AccessLog.id))
+            .order_by(desc(AccessLog.created_at))
             .limit(limit)
         )
         return list(session.scalars(stmt).all())
 
 
 def get_access_log_stats(limit: int = 20) -> dict:
-    """
-    Сводка по журналу посещений: всего записей, уникальных IP,
-    топ IP, топ путей, топ user-agent, топ стран и городов.
-    """
     with Session(engine) as session:
-        total_entries = session.query(func.count(AccessLog.id)).scalar() or 0
-        unique_ips = session.query(
-            func.count(func.distinct(AccessLog.ip))
-        ).scalar() or 0
-
-        ip_data = (
-            session.query(AccessLog.ip, func.count(AccessLog.id))
-            .filter(AccessLog.ip != "")
-            .group_by(AccessLog.ip)
-            .order_by(func.count(AccessLog.id).desc())
-            .limit(limit)
-            .all()
+        last_entries = list(
+            session.scalars(
+                select(AccessLog)
+                .order_by(desc(AccessLog.created_at))
+                .limit(limit)
+            ).all()
         )
-        top_ips = [{"ip": ip, "count": cnt} for ip, cnt in ip_data]
 
-        path_data = (
-            session.query(AccessLog.path, func.count(AccessLog.id))
-            .filter(AccessLog.path != "")
+        total_visits = session.scalar(select(func.count(AccessLog.id))) or 0
+
+        per_path = session.execute(
+            select(
+                AccessLog.path,
+                func.count(AccessLog.id).label("cnt")
+            )
             .group_by(AccessLog.path)
-            .order_by(func.count(AccessLog.id).desc())
+            .order_by(desc("cnt"))
             .limit(limit)
-            .all()
-        )
-        top_paths = [{"path": p, "count": cnt} for p, cnt in path_data]
+        ).all()
 
-        agent_data = (
-            session.query(AccessLog.user_agent, func.count(AccessLog.id))
-            .filter(AccessLog.user_agent != "")
-            .group_by(AccessLog.user_agent)
-            .order_by(func.count(AccessLog.id).desc())
-            .limit(limit)
-            .all()
-        )
-        top_agents = [{"user_agent": ua, "count": cnt} for ua, cnt in agent_data]
-
-        country_data = (
-            session.query(AccessLog.country, func.count(AccessLog.id))
-            .filter(AccessLog.country != "")
+        per_country = session.execute(
+            select(
+                AccessLog.country,
+                func.count(AccessLog.id).label("cnt")
+            )
             .group_by(AccessLog.country)
-            .order_by(func.count(AccessLog.id).desc())
+            .order_by(desc("cnt"))
             .limit(limit)
-            .all()
-        )
-        top_countries = [{"country": c, "count": cnt} for c, cnt in country_data]
+        ).all()
 
-        city_data = (
-            session.query(AccessLog.city, func.count(AccessLog.id))
-            .filter(AccessLog.city != "")
+        per_city = session.execute(
+            select(
+                AccessLog.city,
+                func.count(AccessLog.id).label("cnt")
+            )
             .group_by(AccessLog.city)
-            .order_by(func.count(AccessLog.id).desc())
+            .order_by(desc("cnt"))
             .limit(limit)
-            .all()
-        )
-        top_cities = [{"city": c, "count": cnt} for c, cnt in city_data]
+        ).all()
 
     return {
-        "total_entries": total_entries,
-        "unique_ips": unique_ips,
-        "top_ips": top_ips,
-        "top_paths": top_paths,
-        "top_agents": top_agents,
-        "top_countries": top_countries,
-        "top_cities": top_cities,
+        "total_visits": total_visits,
+        "last_entries": last_entries,
+        "per_path": per_path,
+        "per_country": per_country,
+        "per_city": per_city,
     }
 
 
-# --- СКЛАД: поиск и фильтры по PartStock ---
+# ============================
+#  СКЛАД: ПОИСК И ФИЛЬТРЫ
+# ============================
 
 def search_stock(
-    part_number: str | None = None,
-    name: str | None = None,
-    group: str | None = None,
-    status: str | None = None,
+    part_number: Optional[str] = None,
+    name: Optional[str] = None,
+    group: Optional[str] = None,
+    status: Optional[str] = None,
+    part: Optional[str] = None,
 ) -> list[PartStock]:
     """
-    Поиск по складу запчастей.
-    Все фильтры опциональны.
+    Поиск по складу. Для совместимости с разными версиями
+    параметр номера детали может приходить как part_number, так и part.
     """
+    # для совместимости: если part_number пустой, берём part
+    if not part_number and part:
+        part_number = part
+
     with Session(engine) as session:
         stmt = select(PartStock)
         conditions = []
 
         if part_number:
-            p = f"%{part_number.strip()}%"
-            conditions.append(PartStock.part_number.ilike(p))
+            q = f"%{part_number.strip().lower()}%"
+            conditions.append(func.lower(PartStock.part_number).like(q))
 
         if name:
-            p = f"%{name.strip()}%"
-            conditions.append(PartStock.name.ilike(p))
+            qn = f"%{name.strip().lower()}%"
+            conditions.append(func.lower(PartStock.name).like(qn))
 
         if group:
             conditions.append(PartStock.group_name == group)
@@ -778,24 +839,91 @@ def search_stock(
 
 
 def get_stock_filter_options() -> dict:
-    """
-    Наборы значений для фильтров склада (группа, статус).
-    """
     with Session(engine) as session:
         groups = [
-            g[0]
-            for g in session.query(PartStock.group_name)
-            .distinct()
-            .order_by(PartStock.group_name)
+            g for (g,) in session.execute(
+                select(PartStock.group_name)
+                .where(PartStock.group_name.is_not(None))
+                .distinct()
+                .order_by(PartStock.group_name)
+            )
         ]
         statuses = [
-            s[0]
-            for s in session.query(PartStock.status)
-            .distinct()
-            .order_by(PartStock.status)
+            s for (s,) in session.execute(
+                select(PartStock.status)
+                .where(PartStock.status.is_not(None))
+                .distinct()
+                .order_by(PartStock.status)
+            )
         ]
 
     return {
         "groups": groups,
         "statuses": statuses,
     }
+
+
+# ============================
+#  ЗАЯВКИ "НА ЗАКУПКУ" (PartRequest)
+# ============================
+
+def add_part_request(
+    *,
+    part_number: Optional[str] = None,
+    name: Optional[str] = None,
+    model: Optional[str] = None,
+    group_name: Optional[str] = None,
+    catalog_id: Optional[int] = None,
+    source_url: Optional[str] = None,
+    requester_ip: Optional[str] = None,
+    requester_ua: Optional[str] = None,
+) -> int:
+    """
+    Добавляет новую заявку на закупку запчасти.
+    Возвращает ID созданной заявки.
+    """
+    with Session(engine) as session:
+        req = PartRequest(
+            part_number=part_number,
+            name=name,
+            model=model,
+            group_name=group_name,
+            catalog_id=catalog_id,
+            source_url=source_url,
+            requester_ip=requester_ip,
+            requester_ua=requester_ua,
+            status="new",
+        )
+        session.add(req)
+        session.commit()
+        session.refresh(req)
+        return req.id
+
+
+def get_part_requests(status: Optional[str] = None) -> list[PartRequest]:
+    """
+    Возвращает список заявок, отсортированных по дате (новые сверху).
+    Можно фильтровать по статусу ('new', 'in_work', 'ordered', 'received', 'cancelled').
+    """
+    with Session(engine) as session:
+        stmt = select(PartRequest).order_by(
+            desc(PartRequest.created_at), desc(PartRequest.id)
+        )
+
+        if status:
+            stmt = stmt.where(PartRequest.status == status)
+
+        return list(session.scalars(stmt).all())
+
+
+def update_request_status(request_id: int, new_status: str) -> bool:
+    """
+    Обновляет статус заявки. Возвращает True, если заявка найдена и обновлена.
+    """
+    with Session(engine) as session:
+        req = session.get(PartRequest, request_id)
+        if not req:
+            return False
+        req.status = new_status
+        session.commit()
+        return True
