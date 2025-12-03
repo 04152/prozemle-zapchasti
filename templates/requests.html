@@ -1,0 +1,192 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="pa-card">
+    <div class="pa-results-header">
+        <div>
+            <h2>Заявки на запчасти</h2>
+            <p class="pa-results-subtitle">
+                Список заявок, поданных через форму «Новая заявка» и кнопки «На закупку» в каталогах.
+                Здесь инженер видит все заявки и может менять их статусы.
+            </p>
+        </div>
+    </div>
+
+    <form method="get" class="pa-filters-row" style="margin-bottom: 0.75rem;">
+        <div>
+            <label class="pa-field-label" for="status">Статус заявки</label>
+            <select name="status" id="status" class="pa-select">
+                <option value="">Все статусы</option>
+                {% for st in allowed_statuses %}
+                    <option value="{{ st }}" {% if current_status == st %}selected{% endif %}>
+                        {% if st == "new" %}
+                            Новые
+                        {% elif st == "in_work" %}
+                            В работе
+                        {% elif st == "ordered" %}
+                            Заказано
+                        {% elif st == "received" %}
+                            Получено
+                        {% elif st == "cancelled" %}
+                            Отменено
+                        {% else %}
+                            {{ st }}
+                        {% endif %}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="pa-filters-actions">
+            <button type="submit" class="pa-button-primary pa-button-small">
+                Применить
+            </button>
+            <a href="{{ url_for('requests_admin') }}" class="pa-button-secondary pa-button-small">
+                Сбросить
+            </a>
+        </div>
+    </form>
+
+    {% if requests %}
+        <div class="pa-table-wrapper">
+            <table class="pa-table pa-table-compact">
+                <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Дата</th>
+                    <th>Группа / модель</th>
+                    <th>Деталь</th>
+                    <th>Статус</th>
+                    <th>Источник</th>
+                    <th>Кто отправил</th>
+                    <th>Управление</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for r in requests %}
+                    <tr>
+                        <td>{{ r.id }}</td>
+                        <td>
+                            {{ r.created_at.strftime("%Y-%m-%d %H:%M") if r.created_at else "" }}
+                        </td>
+                        <td>
+                            {% if r.group_name %}
+                                <strong>{{ r.group_name }}</strong><br>
+                            {% endif %}
+                            {% if r.model %}
+                                <span>{{ r.model }}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if r.part_number %}
+                                <div><strong>{{ r.part_number }}</strong></div>
+                            {% endif %}
+                            {% if r.name %}
+                                <div>{{ r.name }}</div>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if r.status == "new" %}
+                                <span class="pa-badge pa-badge-status-check">Новая</span>
+                            {% elif r.status == "in_work" %}
+                                <span class="pa-badge pa-badge-status-ok">В работе</span>
+                            {% elif r.status == "ordered" %}
+                                <span class="pa-badge pa-badge-status-check">Заказано</span>
+                            {% elif r.status == "received" %}
+                                <span class="pa-badge pa-badge-status-ok">Получено</span>
+                            {% elif r.status == "cancelled" %}
+                                <span class="pa-badge pa-badge-status-old">Отменено</span>
+                            {% else %}
+                                {{ r.status }}
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if r.source_url %}
+                                <a href="{{ r.source_url }}" target="_blank" rel="noopener">
+                                    Открыть каталог
+                                </a>
+                            {% elif r.catalog_id %}
+                                <span>ID каталога: {{ r.catalog_id }}</span>
+                            {% else %}
+                                —
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if r.requester_ip %}
+                                <div>IP: {{ r.requester_ip }}</div>
+                            {% endif %}
+                            {% if r.requester_ua %}
+                                <div style="font-size: 0.78rem; color:#6b7280;">
+                                    {{ r.requester_ua }}
+                                </div>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="pa-row-actions">
+                                {# Переходы по статусам #}
+                                {% if r.status == "new" %}
+                                    <form method="post"
+                                          action="{{ url_for('request_change_status', request_id=r.id) }}"
+                                          class="pa-row-action-inline">
+                                        <input type="hidden" name="new_status" value="in_work">
+                                        <input type="hidden" name="return_status" value="{{ current_status }}">
+                                        <button type="submit"
+                                                class="pa-button-secondary pa-button-small"
+                                                title="Взять в работу">
+                                            В работу
+                                        </button>
+                                    </form>
+                                {% elif r.status == "in_work" %}
+                                    <form method="post"
+                                          action="{{ url_for('request_change_status', request_id=r.id) }}"
+                                          class="pa-row-action-inline">
+                                        <input type="hidden" name="new_status" value="ordered">
+                                        <input type="hidden" name="return_status" value="{{ current_status }}">
+                                        <button type="submit"
+                                                class="pa-button-secondary pa-button-small"
+                                                title="Пометить как заказано">
+                                            Заказано
+                                        </button>
+                                    </form>
+                                {% elif r.status == "ordered" %}
+                                    <form method="post"
+                                          action="{{ url_for('request_change_status', request_id=r.id) }}"
+                                          class="pa-row-action-inline">
+                                        <input type="hidden" name="new_status" value="received">
+                                        <input type="hidden" name="return_status" value="{{ current_status }}">
+                                        <button type="submit"
+                                                class="pa-button-secondary pa-button-small"
+                                                title="Пометить как получено">
+                                            Получено
+                                        </button>
+                                    </form>
+                                {% endif %}
+
+                                {# Отменить можно из любого статуса, кроме уже отменённого #}
+                                {% if r.status != "cancelled" %}
+                                    <form method="post"
+                                          action="{{ url_for('request_change_status', request_id=r.id) }}"
+                                          class="pa-row-action-inline">
+                                        <input type="hidden" name="new_status" value="cancelled">
+                                        <input type="hidden" name="return_status" value="{{ current_status }}">
+                                        <button type="submit"
+                                                class="pa-button-secondary pa-button-small"
+                                                title="Отменить заявку">
+                                            Отменить
+                                        </button>
+                                    </form>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="pa-empty-hint">
+            Заявок пока нет. Они появятся здесь после отправки формы «Новая заявка» или использования
+            кнопки «На закупку» в списке каталогов.
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

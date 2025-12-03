@@ -34,20 +34,23 @@ from db import (
     get_access_log_stats,
     search_stock,
     get_stock_filter_options,
+    add_part_request,
+    get_part_requests,
+    update_request_status,  # <-- добавили импорт
 )
 
 app = Flask(__name__)
-# Нужен для flash и сессий
 app.secret_key = "change-me-to-random-secret"
 
-# Служебный пароль для обновления базы И админ-панели
-# Если в окружении не задан ADMIN_TOKEN — по умолчанию 1234567890
 ADMIN_TOKEN = os.environ.get("ADMIN_TOKEN", "1234567890")
 
-# Инициализация БД при старте
+# Допустимые статусы заявок
+ALLOWED_REQUEST_STATUSES = ("new", "in_work", "ordered", "received", "cancelled")
+
+# Инициализация БД
 init_db()
 
-# При старте пробуем подтянуть данные из Excel
+# Попытка импортировать каталоги из Excel при старте
 try:
     import_from_excel()
 except Exception as e:
@@ -73,7 +76,7 @@ def highlight(text: str, query: str | None) -> Markup:
     return Markup(pattern.sub(_repl, escape(text)))
 
 
-# ---------- Вспомогательная функция для фильтров ----------
+# ---------- Вспомогательные функции ----------
 
 def _current_filters_from_request(source: str = "args") -> dict:
     container = request.args if source == "args" else request.form
@@ -95,16 +98,10 @@ def _current_filters_from_request(source: str = "args") -> dict:
     }
 
 
-# ---------- Хук для client_id и логирования заходов ----------
+# ---------- client_id и логирование запросов ----------
 
 @app.before_request
 def assign_client_id():
-    """
-    Присваиваем каждому браузеру client_id через cookie.
-    Это позволит видеть, как один и тот же человек ходит по страницам,
-    даже если IP меняется.
-    """
-    # Не трогаем статику и favicon
     if request.path.startswith("/static") or request.path.startswith("/favicon"):
         return
 
@@ -117,12 +114,8 @@ def assign_client_id():
 
 @app.after_request
 def log_request(response):
-    """
-    Логируем каждый запрос (кроме статики) в access_logs.
-    """
     try:
         if not (request.path.startswith("/static") or request.path.startswith("/favicon")):
-            # IP с учётом X-Forwarded-For (на PythonAnywhere реальный IP там)
             xff = request.headers.get("X-Forwarded-For", "")
             if xff:
                 ip = xff.split(",")[0].strip()
@@ -136,7 +129,6 @@ def log_request(response):
             client_id = getattr(g, "client_id", "")
 
             catalog_id = None
-            # Если это /open/<id> — вытащим id
             m = re.match(r"^/open/(\d+)", path)
             if m:
                 try:
@@ -154,18 +146,15 @@ def log_request(response):
                 catalog_id=catalog_id,
             )
 
-        # Проставляем cookie с client_id, если только что выдали
         if hasattr(g, "new_client_id"):
-            # 3 года жизни cookie
             response.set_cookie("client_id", g.new_client_id, max_age=60 * 60 * 24 * 365 * 3)
     except Exception as e:
-        # Не ломаем ответ, даже если логирование упало
         print(f"Ошибка логирования access_log: {e}")
 
     return response
 
 
-# ---------- Маршруты ----------
+# ---------- Каталоги ----------
 
 @app.route("/", methods=["GET"])
 def index():
@@ -180,7 +169,6 @@ def index():
         favorites_only=filters["favorites_only"],
     )
 
-    # Логируем поиск (упрощённо: только фильтры)
     try:
         log_search(filters)
     except Exception as e:
@@ -355,7 +343,6 @@ def open_catalog(catalog_id: int):
         flash("Запись каталога не найдена.", "error")
         return redirect(url_for("index"))
 
-    # Лог клика по каталогу
     try:
         record_click(catalog_id)
     except Exception as e:
@@ -374,11 +361,6 @@ def stats():
 
 @app.route("/admin/logs", methods=["GET", "POST"])
 def admin_logs():
-    """
-    Простая админ-страница:
-    - при первом заходе просит пароль администратора (ADMIN_TOKEN)
-    - после ввода показывает последние заходы и сводку
-    """
     if request.method == "POST":
         token = request.form.get("token", "").strip()
         if token == ADMIN_TOKEN:
@@ -388,7 +370,6 @@ def admin_logs():
             flash("Неверный пароль администратора.", "error")
             return redirect(url_for("admin_logs"))
 
-    # GET
     if not session.get("is_admin"):
         return render_template("admin_login.html")
 
@@ -404,11 +385,10 @@ def admin_logout():
     return redirect(url_for("index"))
 
 
+# ---------- Склад ----------
+
 @app.route("/sklad")
 def warehouse():
-    """
-    Страница склада (пока только просмотр остатков, без редактирования).
-    """
     part = (request.args.get("part") or "").strip()
     name = (request.args.get("name") or "").strip()
     group = (request.args.get("group") or "").strip()
@@ -432,6 +412,141 @@ def warehouse():
         current_group=group,
         current_status=status,
     )
+
+
+# ---------- Новая заявка ----------
+
+@app.route("/request/new", methods=["GET", "POST"])
+def new_request():
+    if request.method == "POST":
+        part_number = (request.form.get("part_number") or "").strip()
+        name = (request.form.get("name") or "").strip()
+        model = (request.form.get("model") or "").strip()
+        group_name = (request.form.get("group_name") or "").strip()
+        catalog_id_raw = (request.form.get("catalog_id") or "").strip()
+        source_url = (request.form.get("source_url") or "").strip()
+
+        if not part_number and not name:
+            flash("Укажите хотя бы номер детали или наименование.", "error")
+            return render_template(
+                "request_new.html",
+                part_number=part_number,
+                name=name,
+                model=model,
+                group_name=group_name,
+                catalog_id=catalog_id_raw,
+                source_url=source_url,
+            )
+
+        xff = request.headers.get("X-Forwarded-For", "")
+        if xff:
+            ip = xff.split(",")[0].strip()
+        else:
+            ip = request.remote_addr or ""
+
+        ua = request.headers.get("User-Agent", "")[:480]
+
+        catalog_id = None
+        if catalog_id_raw:
+            try:
+                catalog_id = int(catalog_id_raw)
+            except ValueError:
+                catalog_id = None
+
+        try:
+            req_id = add_part_request(
+                part_number=part_number or None,
+                name=name or None,
+                model=model or None,
+                group_name=group_name or None,
+                catalog_id=catalog_id,
+                source_url=source_url or None,
+                requester_ip=ip,
+                requester_ua=ua,
+            )
+            flash(f"Заявка №{req_id} сохранена. Инженер увидит её в разделе заявок.", "success")
+            return redirect(url_for("index"))
+        except Exception as e:
+            flash(f"Ошибка при сохранении заявки: {e}", "error")
+            return render_template(
+                "request_new.html",
+                part_number=part_number,
+                name=name,
+                model=model,
+                group_name=group_name,
+                catalog_id=catalog_id_raw,
+                source_url=source_url,
+            )
+
+    part_number = (request.args.get("part_number") or "").strip()
+    name = (request.args.get("name") or "").strip()
+    model = (request.args.get("model") or "").strip()
+    group_name = (request.args.get("group_name") or "").strip()
+    catalog_id = (request.args.get("catalog_id") or "").strip()
+    source_url = (request.args.get("source_url") or "").strip()
+
+    return render_template(
+        "request_new.html",
+        part_number=part_number,
+        name=name,
+        model=model,
+        group_name=group_name,
+        catalog_id=catalog_id,
+        source_url=source_url,
+    )
+
+
+# ---------- Заявки (просмотр + смена статуса) ----------
+
+@app.route("/requests", methods=["GET"])
+def requests_admin():
+    if not session.get("is_admin"):
+        return render_template("admin_login.html")
+
+    status = (request.args.get("status") or "").strip()
+    if status and status not in ALLOWED_REQUEST_STATUSES:
+        status = ""
+
+    requests_list = get_part_requests(status=status or None)
+
+    return render_template(
+        "requests.html",
+        requests=requests_list,
+        current_status=status,
+        allowed_statuses=ALLOWED_REQUEST_STATUSES,
+    )
+
+
+@app.route("/requests/<int:request_id>/status", methods=["POST"])
+def request_change_status(request_id: int):
+    """
+    Смена статуса заявки. Доступ только админу.
+    """
+    if not session.get("is_admin"):
+        flash("Нет прав для изменения статусов заявок.", "error")
+        return redirect(url_for("admin_logs"))
+
+    new_status = (request.form.get("new_status") or "").strip()
+    return_status = (request.form.get("return_status") or "").strip()
+
+    if new_status not in ALLOWED_REQUEST_STATUSES:
+        flash("Недопустимый статус.", "error")
+        return redirect(url_for("requests_admin", status=return_status))
+
+    ok = update_request_status(request_id, new_status)
+    if not ok:
+        flash("Заявка не найдена.", "error")
+    else:
+        human_map = {
+            "new": "Новая",
+            "in_work": "В работе",
+            "ordered": "Заказано",
+            "received": "Получено",
+            "cancelled": "Отменено",
+        }
+        flash(f"Статус заявки #{request_id} изменён на: {human_map.get(new_status, new_status)}.", "success")
+
+    return redirect(url_for("requests_admin", status=return_status))
 
 
 if __name__ == "__main__":

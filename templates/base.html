@@ -26,25 +26,55 @@
             </div>
         </div>
 
-        <nav class="pa-nav">
-            <a href="{{ url_for('index') }}"
-               class="pa-nav-link {% if request.endpoint == 'index' %}pa-nav-link-active{% endif %}">
-                Каталоги
-            </a>
-            <a href="{{ url_for('warehouse') }}"
-               class="pa-nav-link {% if request.endpoint == 'warehouse' %}pa-nav-link-active{% endif %}">
-                Склад
+        <div style="display: flex; flex-direction: column; gap: 0.35rem; align-items: flex-end;">
+            <nav class="pa-nav">
+                <a href="{{ url_for('index') }}"
+                   class="pa-nav-link {% if request.endpoint == 'index' %}pa-nav-link-active{% endif %}">
+                    Каталоги
+                </a>
+                <a href="{{ url_for('warehouse') }}"
+                   class="pa-nav-link {% if request.endpoint == 'warehouse' %}pa-nav-link-active{% endif %}">
+                    Склад
+                </a>
+                <a href="{{ url_for('new_request') }}"
+                   class="pa-nav-link {% if request.endpoint == 'new_request' %}pa-nav-link-active{% endif %}">
+                    Новая заявка
+                </a>
 
-            </a>
-            <a href="{{ url_for('stats') }}"
-               class="pa-nav-link {% if request.endpoint == 'stats' %}pa-nav-link-active{% endif %}">
-                Статистика
-            </a>
-            <a href="{{ url_for('admin_logs') }}"
-               class="pa-nav-link pa-nav-link-secondary">
-                Админ
-            </a>
-        </nav>
+                {% if session.get('is_admin') %}
+                    <a href="{{ url_for('requests_admin') }}"
+                       class="pa-nav-link {% if request.endpoint == 'requests_admin' %}pa-nav-link-active{% endif %}">
+                        Заявки
+                    </a>
+                {% endif %}
+
+                <a href="{{ url_for('stats') }}"
+                   class="pa-nav-link {% if request.endpoint == 'stats' %}pa-nav-link-active{% endif %}">
+                    Статистика
+                </a>
+                <a href="{{ url_for('admin_logs') }}"
+                   class="pa-nav-link pa-nav-link-secondary">
+                    Админ
+                </a>
+            </nav>
+
+            {# Блок для администратора: кнопка "Обновить базу" #}
+            {% if session.get('is_admin') %}
+                <form method="post"
+                      action="{{ url_for('refresh') }}"
+                      style="display: flex; gap: 0.4rem; align-items: center; font-size: 0.8rem;">
+                    <input type="password"
+                           name="token"
+                           placeholder="Пароль для обновления"
+                           class="pa-input"
+                           style="max-width: 170px; padding: 0.25rem 0.45rem; font-size: 0.78rem;">
+                    <button type="submit"
+                            class="pa-button-primary pa-button-small">
+                        Обновить базу из Excel
+                    </button>
+                </form>
+            {% endif %}
+        </div>
     </header>
 
     <main class="pa-main">
@@ -70,7 +100,7 @@
             <span>Сервис подбора каталогов и запчастей</span>
         </div>
         <div class="pa-footer-meta">
-            <span>Версия 3.1 · каталоги + склад + аналитика + журнал посещений</span>
+            <span>Версия 3.2 (заявки: просмотр) · каталоги + склад + аналитика + журнал посещений</span>
         </div>
     </footer>
 </div>

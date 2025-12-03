@@ -6,7 +6,7 @@
         <div>
             <h2>Поиск по каталогам запчастей</h2>
             <div class="pa-results-subtitle">
-                Подбор по технике, типу каталога, стране источника и свободному поиску
+                Подбор по технике, типу каталога, стране источника, избранным и свободному поиску
             </div>
         </div>
     </div>
@@ -22,12 +22,16 @@
                     {% endfor %}
                 </select>
             </div>
+
             <div>
                 <label class="pa-field-label">Модель / техника</label>
-                <input type="text" name="model" class="pa-input"
+                <input type="text"
+                       name="model"
+                       class="pa-input"
                        placeholder="например: МТЗ-82, КВК-800, Нива"
                        value="{{ current_model }}">
             </div>
+
             <div>
                 <label class="pa-field-label">Тип каталога</label>
                 <select name="catalog_type" class="pa-select">
@@ -37,6 +41,7 @@
                     {% endfor %}
                 </select>
             </div>
+
             <div>
                 <label class="pa-field-label">Страна источника</label>
                 <select name="country" class="pa-select">
@@ -44,7 +49,15 @@
                     {% for c in countries %}
                         {% if c %}
                             <option value="{{ c }}" {% if current_country == c %}selected{% endif %}>
-                                {% if c == "BY" %}BY (Беларусь){% elif c == "RU" %}RU (Россия){% elif c == "OTHER" %}Другие{% else %}{{ c }}{% endif %}
+                                {% if c == "BY" %}
+                                    BY (Беларусь)
+                                {% elif c == "RU" %}
+                                    RU (Россия)
+                                {% elif c == "OTHER" %}
+                                    Другие
+                                {% else %}
+                                    {{ c }}
+                                {% endif %}
                             </option>
                         {% endif %}
                     {% endfor %}
@@ -55,7 +68,9 @@
         <div class="pa-filters-row">
             <div style="flex: 1 1 auto;">
                 <label class="pa-field-label">Общий поиск</label>
-                <input type="text" name="query" class="pa-input"
+                <input type="text"
+                       name="query"
+                       class="pa-input"
                        placeholder="Поиск по модели, описанию, номеру каталога, каталожному номеру…"
                        value="{{ current_query }}">
             </div>
@@ -72,14 +87,14 @@
                     Найти
                 </button>
                 <a href="{{ url_for('index') }}" class="pa-button-secondary">
-                    Сбросить
+                    Сбросить фильтры
                 </a>
             </div>
         </div>
     </form>
 
-    <div class="pa-filters-row pa-filters-row-bottom">
-        <div class="pa-meta-block">
+    <div class="pa-card-two-columns" style="margin-top: 0.5rem;">
+        <div class="pa-card-column pa-meta-block">
             <div class="pa-meta-title">Сохранённые запросы</div>
             {% if saved_queries %}
                 <div class="pa-chip-row">
@@ -94,7 +109,7 @@
             {% endif %}
         </div>
 
-        <div class="pa-meta-block">
+        <div class="pa-card-column pa-meta-block">
             <div class="pa-meta-title">Недавние поиски</div>
             {% if recent_searches %}
                 <ul class="pa-meta-list">
@@ -129,14 +144,9 @@
         </div>
     </div>
 
-    {% if not records %}
-        <p class="pa-empty-hint">
-            Попробуйте убрать часть фильтров или изменить текст запроса.
-            Часто помогает поиск только по модели (например, «МТЗ-82» или «КВК-800»).
-        </p>
-    {% else %}
+    {% if records %}
         <div class="pa-table-wrapper">
-            <table class="pa-table pa-table-compact pa-table-catalog">
+            <table class="pa-table pa-table-catalog">
                 <thead>
                 <tr>
                     <th>Группа</th>
@@ -179,22 +189,41 @@
                                         {% if rec.source_country == 'BY' %}pa-badge-source-official
                                         {% elif rec.source_country == 'RU' %}pa-badge-source-shop
                                         {% else %}pa-badge-source-forum{% endif %}">
-                                        {% if rec.source_country == 'BY' %}BY{% elif rec.source_country == 'RU' %}RU{% else %}{{ rec.source_country }}{% endif %}
+                                        {% if rec.source_country == 'BY' %}
+                                            BY (Беларусь)
+                                        {% elif rec.source_country == 'RU' %}
+                                            RU (Россия)
+                                        {% else %}
+                                            {{ rec.source_country }}
+                                        {% endif %}
                                     </span>
                                 {% endif %}
                                 {% if rec.domain %}
-                                    <div class="pa-domain-text">{{ rec.domain }}</div>
+                                    <span class="pa-domain-text">{{ rec.domain }}</span>
                                 {% endif %}
                             </div>
                         </td>
                         <td class="pa-col-actions">
+                            <span class="pa-td-label">Действия</span>
                             <div class="pa-row-actions">
+                                <!-- Открыть каталог -->
                                 <a href="{{ url_for('open_catalog', catalog_id=rec.id) }}"
                                    class="pa-button-primary pa-button-small"
                                    target="_blank" rel="noopener">
                                     Открыть
                                 </a>
 
+                                <!-- НОВОЕ: заявка "На закупку" с предзаполнением -->
+                                <a href="{{ url_for('new_request',
+                                                    catalog_id=rec.id,
+                                                    group_name=rec.group_name,
+                                                    model=rec.models,
+                                                    source_url=rec.url) }}"
+                                   class="pa-button-secondary pa-button-small">
+                                    На закупку
+                                </a>
+
+                                <!-- Избранное -->
                                 <form method="post"
                                       action="{{ url_for('toggle_favorite', catalog_id=rec.id) }}"
                                       class="pa-row-action-inline">
@@ -203,7 +232,8 @@
                                     <input type="hidden" name="catalog_type" value="{{ current_type }}">
                                     <input type="hidden" name="query" value="{{ current_query }}">
                                     <input type="hidden" name="country" value="{{ current_country }}">
-                                    <input type="hidden" name="favorites_only" value="{% if favorites_only %}1{% else %}0{% endif %}">
+                                    <input type="hidden" name="favorites_only"
+                                           value="{% if favorites_only %}1{% else %}0{% endif %}">
                                     <button type="submit" class="pa-favorite-toggle" title="Пометить как избранное">
                                         {% if rec.favorite %}
                                             <span>★</span>
@@ -213,6 +243,7 @@
                                     </button>
                                 </form>
 
+                                <!-- Заметка инженера -->
                                 <a href="{{ url_for('edit_note',
                                                     catalog_id=rec.id,
                                                     group=current_group,
@@ -230,6 +261,15 @@
                 {% endfor %}
                 </tbody>
             </table>
+        </div>
+    {% else %}
+        <div class="pa-empty-hint">
+            Попробуйте:
+            <ul>
+                <li>убрать лишние фильтры (оставить только группу или модель);</li>
+                <li>поискать по части названия или модели (например, «МТЗ-82» вместо полного описания);</li>
+                <li>снять галочку «Только избранные», если она установлена.</li>
+            </ul>
         </div>
     {% endif %}
 </div>

@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="pa-card">
+    <div class="pa-results-header">
+        <div>
+            <h2>Новая заявка на запчасть</h2>
+            <p class="pa-results-subtitle">
+                Укажите известные данные о детали. Если не знаете номер — достаточно наименования и модели техники.
+            </p>
+        </div>
+    </div>
+
+    <form method="post" class="pa-form">
+        <div class="pa-filters-grid" style="margin-bottom: 0.75rem;">
+            <div>
+                <label class="pa-field-label" for="part_number">Номер детали (артикул)</label>
+                <input
+                    type="text"
+                    id="part_number"
+                    name="part_number"
+                    class="pa-input"
+                    value="{{ part_number or '' }}"
+                    placeholder="Например, 50-12-123 или 80-1601090"
+                >
+            </div>
+            <div>
+                <label class="pa-field-label" for="name">Наименование детали</label>
+                <input
+                    type="text"
+                    id="name"
+                    name="name"
+                    class="pa-input"
+                    value="{{ name or '' }}"
+                    placeholder="Например, вал карданный, фильтр масляный"
+                >
+            </div>
+            <div>
+                <label class="pa-field-label" for="model">Модель техники</label>
+                <input
+                    type="text"
+                    id="model"
+                    name="model"
+                    class="pa-input"
+                    value="{{ model or '' }}"
+                    placeholder="Например, МТЗ-82.1, Амкодор 342С4"
+                >
+            </div>
+            <div>
+                <label class="pa-field-label" for="group_name">Группа техники</label>
+                <input
+                    type="text"
+                    id="group_name"
+                    name="group_name"
+                    class="pa-input"
+                    value="{{ group_name or '' }}"
+                    placeholder="Тракторы МТЗ, Амкодор, КВК-800..."
+                >
+            </div>
+        </div>
+
+        <div class="pa-filters-grid" style="margin-bottom: 0.75rem;">
+            <div>
+                <label class="pa-field-label" for="source_url">Ссылка на каталог / страницу</label>
+                <input
+                    type="url"
+                    id="source_url"
+                    name="source_url"
+                    class="pa-input"
+                    value="{{ source_url or '' }}"
+                    placeholder="Если копировали из каталога — вставьте сюда ссылку"
+                >
+            </div>
+            <div>
+                <label class="pa-field-label" for="catalog_id">ID каталога (служебное)</label>
+                <input
+                    type="text"
+                    id="catalog_id"
+                    name="catalog_id"
+                    class="pa-input"
+                    value="{{ catalog_id or '' }}"
+                    placeholder="Заполнится автоматически при переходе из каталога"
+                >
+            </div>
+        </div>
+
+        <div class="pa-filters-row pa-filters-row-bottom" style="justify-content: space-between;">
+            <div>
+                <a href="{{ url_for('index') }}" class="pa-button-secondary pa-button-small">
+                    ← Назад к каталогам
+                </a>
+            </div>
+            <div class="pa-filters-actions">
+                <button type="submit" class="pa-button-primary">
+                    Отправить заявку
+                </button>
+            </div>
+        </div>
+
+        <p class="pa-results-subtitle" style="margin-top: 0.5rem;">
+            Заявка будет сохранена в системе. Позже мы добавим отдельную страницу инженера для обработки заявок
+            и вкладку «На закупку» на странице склада.
+        </p>
+    </form>
+</div>
+{% endblock %}
