@@ -4,16 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="14a4daf0-e3fa-4190-b6c9-32ebe0de75d3" name="Changes" comment="Initial commit_v 3.1">
-      <change afterPath="$PROJECT_DIR$/templates/request_new.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/templates/requests.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app.py" beforeDir="false" afterPath="$PROJECT_DIR$/app.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/catalogs.db" beforeDir="false" afterPath="$PROJECT_DIR$/catalogs.db" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/base.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/base.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/index.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Каталоги_запчастей_ПроземлеАгро.xlsx" beforeDir="false" afterPath="$PROJECT_DIR$/Каталоги_запчастей_ПроземлеАгро.xlsx" afterDir="false" />
-    </list>
+    <list default="true" id="14a4daf0-e3fa-4190-b6c9-32ebe0de75d3" name="Changes" comment="Initial commit_v 3.2" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -187,7 +178,7 @@
       <workItem from="1764679159997" duration="1527000" />
       <workItem from="1764704019291" duration="2433000" />
       <workItem from="1764739155883" duration="3177000" />
-      <workItem from="1764746164506" duration="2577000" />
+      <workItem from="1764746164506" duration="3178000" />
     </task>
     <task id="LOCAL-00001" summary="Initial commit">
       <option name="closed" value="true" />
@@ -277,7 +268,15 @@
       <option name="project" value="LOCAL" />
       <updated>1764680082444</updated>
     </task>
-    <option name="localTasksCounter" value="12" />
+    <task id="LOCAL-00012" summary="Initial commit_v 3.2">
+      <option name="closed" value="true" />
+      <created>1764751990177</created>
+      <option name="number" value="00012" />
+      <option name="presentableId" value="LOCAL-00012" />
+      <option name="project" value="LOCAL" />
+      <updated>1764751990177</updated>
+    </task>
+    <option name="localTasksCounter" value="13" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -292,7 +291,8 @@
     <MESSAGE value="Initial commit_v 2.6" />
     <MESSAGE value="Initial commit_v 3.0" />
     <MESSAGE value="Initial commit_v 3.1" />
-    <option name="LAST_COMMIT_MESSAGE" value="Initial commit_v 3.1" />
+    <MESSAGE value="Initial commit_v 3.2" />
+    <option name="LAST_COMMIT_MESSAGE" value="Initial commit_v 3.2" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/$validate_links.coverage" NAME="validate_links Coverage Results" MODIFIED="1764567879382" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
